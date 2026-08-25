@@ -258,7 +258,7 @@
                 </div>
                 <div class="dropdown-divider"></div>
                 {% if settings.top_menu_profile|default('') %}<a href="{{ 'client/profile'|url }}" class="dropdown-item">{{ 'Profile'|trans }}</a>{% endif %}
-                <a href="{{ '/client/balance'|url }}" class="dropdown-item">{{ 'Wallet'|trans }}</a>
+                {% if guest.invoice_funds_enabled %}<a href="{{ '/client/balance'|url }}" class="dropdown-item">{{ 'Wallet'|trans }}</a>{% endif %}
                 <a href="{{ '/email'|url }}" class="dropdown-item">{{ 'Emails'|trans }}</a>
                 {% if settings.top_menu_signout|default('') %}<div class="dropdown-divider"></div>
                 <a href="{{ 'client/logout'|url }}" class="dropdown-item">{{ 'Sign Out'|trans }}</a>{% endif %}

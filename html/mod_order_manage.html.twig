@@ -49,6 +49,16 @@
                         <div class="datagrid-title">{{ 'Payment Amount'|trans }}</div>
                         <div class="datagrid-content">{{ order.total|format_currency(order.currency ?? default_currency) }}</div>
                       </div>
+                      {% if order.discount and order.discount > 0 %}
+                      <div class="datagrid-item">
+                        <div class="datagrid-title">{{ 'Order Discount'|trans }}</div>
+                        <div class="datagrid-content">-{{ order.discount|format_currency(order.currency ?? default_currency) }}</div>
+                      </div>
+                      <div class="datagrid-item">
+                        <div class="datagrid-title">{{ 'Payment Amount After Discount'|trans }}</div>
+                        <div class="datagrid-content">{{ (order.total - order.discount)|format_currency(order.currency ?? default_currency) }}</div>
+                      </div>
+                      {% endif %}
                       {% if order.period %}
                       <div class="datagrid-item">
                         <div class="datagrid-title">{{ 'Billing Cycle'|trans }}</div>

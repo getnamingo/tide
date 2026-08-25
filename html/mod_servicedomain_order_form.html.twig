@@ -369,13 +369,13 @@ function unlockDomainInput() {
   input.focus();
 }
 
-const CURRENCY_CODE = "{{ profile.currency|default(default_currency)|e('js') }}";
+const currencyFormat = JSON.parse('{{ currency|json_encode|e('js') }}');
 
 function formatMoney(amount) {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: CURRENCY_CODE
-  }).format(Number(amount));
+    return FOSSBilling.currency.format(total, {
+        ...currencyFormat,
+        code: code,
+    });
 }
 
 function fadeIn(el, display = 'block', durationMs = 150) {
@@ -631,7 +631,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const conversionRate = Number('{{ cart_currency.conversion_rate|default(1) }}');
 
-                for (let years = 1; years <= 5; years++) {
+                // Use explicit registration periods configured for this TLD.
+                // If none are configured, fall back to 5 periods starting
+                // from the TLD's minimum registration period.
+                let allowedYears =
+                    Array.isArray(result.periods) && result.periods.length
+                        ? result.periods
+                        : null;
+
+                if (!allowedYears) {
+                    const minYears =
+                        Number(result.min_years) > 0
+                            ? Number(result.min_years)
+                            : 1;
+
+                    allowedYears = [];
+
+                    for (let years = minYears; years < minYears + 5; years++) {
+                        allowedYears.push(years);
+                    }
+                }
+
+                allowedYears.forEach(function (years) {
                     const totalPrice =
                         years === 1 ? regPrice : regPrice + (years - 1) * renewPrice;
 
@@ -649,7 +670,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const opt = new Option(label, String(years));
                     opt.dataset.price = formattedPrice;
                     yearsSelect.appendChild(opt);
-                }
+                });
                 
                 const priceEl = document.getElementById('registration-price');
 

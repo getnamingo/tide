@@ -72,11 +72,11 @@ function initLanguageSelector() {
 
       if (!lang) return;
 
-      setCookie("fb_locale", lang, 365);
+      setCookie("fossbilling_locale", lang, 365);
       location.reload();
     });
 
-    const current = getCookie("fb_locale");
+    const current = getCookie("fossbilling_locale");
 
     if (current) {
       if (
