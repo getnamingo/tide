@@ -11,7 +11,7 @@
     <meta charset="utf-8">
     <title>{{ page_title }}</title>
 
-    <meta name="description" content="{% block meta_description %}{{ settings.meta_description }}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{{ settings.meta_description|default('') }}{% endblock %}">
     <meta name="keywords" content="{{ settings.meta_keywords|default('') }}">
     <meta name="robots" content="{{ settings.meta_robots|default('') }}">
     <meta name="author" content="{{ settings.meta_author|default('') }}">
