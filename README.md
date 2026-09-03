@@ -32,7 +32,7 @@ We strongly recommend upgrading to the latest version of FOSSBilling.
    **b. Clone with Git**
 
    ```bash
-   git clone https://github.com/getnamingo/tide.git
+   git clone --branch v1.2.4 --depth 1 https://github.com/getnamingo/tide.git
    ```
 
    This creates a directory named `tide`.
@@ -67,7 +67,7 @@ We strongly recommend upgrading to the latest version of FOSSBilling.
    **b. Clone with Git**
 
    ```bash
-   git clone https://github.com/getnamingo/tide.git
+   git clone --branch v1.2.4 --depth 1 https://github.com/getnamingo/tide.git
    ```
 
    This creates a directory named `tide`.
