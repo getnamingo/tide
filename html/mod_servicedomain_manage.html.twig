@@ -57,7 +57,24 @@
             <div class="datagrid-title">{{ 'Expires on'|trans }}</div>
             <div class="datagrid-content">{{ service.expires_at|date('Y-m-d H:i:s') }}</div>
           </div>
-          
+
+          <div class="datagrid-item">
+            <div class="datagrid-title">{{ 'Registrar sync'|trans }}</div>
+            <div class="datagrid-content">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small" id="synced-at-value">
+                    {% if service.synced_at %}
+                        {{ 'Last synced with registrar on %date%'|trans({'%date%': service.synced_at|format_date(pattern="MMM dd, yyyy HH:mm")}) }}
+                    {% else %}
+                        {{ 'Never synced with registrar'|trans }}
+                    {% endif %}
+                </span>
+
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="domain-sync">{{ 'Sync Now'|trans }}</button>
+              </div>
+            </div>
+          </div>
+
           <div class="datagrid-item">
             <div class="datagrid-title">{{ 'Protection'|trans }}
             <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ 'Domain locking is a security feature which prevents your domain name from being transferred without first unlocking it. When this is enabled, a domain cannot be transferred even with the transfer code.'|trans }}" style="cursor: help;">
@@ -473,6 +490,26 @@ document.getElementById('domain-disable-pp').addEventListener('click', function 
             setPrivacyBadge(false);
         },
         (err) => apiFailToast(err)
+    );
+});
+
+document.getElementById('domain-sync').addEventListener('click', function (event) {
+    event.preventDefault();
+
+    const btn = this;
+    btn.disabled = true;
+
+    FOSSBilling.api.client.post(
+        'servicedomain/sync',
+        { order_id: {{ order.id }} },
+        () => {
+            FOSSBilling.message('{{ 'Domain synchronized with registrar'|trans }}');
+            window.location.reload();
+        },
+        (err) => {
+            btn.disabled = false;
+            apiFailToast(err);
+        }
     );
 });
 

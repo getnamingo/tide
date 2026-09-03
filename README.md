@@ -15,55 +15,86 @@ Tide is a client area theme for FOSSBilling. It's designed to enhance your user 
 
 ## Compatibility
 
-- 1.1.7 → FOSSBilling 0.7.2
-- 1.2.2 → FOSSBilling 0.8.5
-- 1.2.3 → FOSSBilling 0.8.6
+- Tide 1.2.4 → FOSSBilling 0.8.7
 
-Install the Tide release that matches your FOSSBilling version.
+We strongly recommend upgrading to the latest version of FOSSBilling.
 
 ## Installation
 
-Follow these steps to install the Tide theme:
+1. Get the Tide theme using one of the following methods:
 
-1. Download or clone this repository.
+   **a. Download from GitHub**
 
-   - If you downloaded a ZIP file, extract it first.
-   - If you cloned the repository, locate the main project folder.
-  
-2. Inside the downloaded/cloned files, you will find a directory containing the theme files
-   (for example: `tide-main`, `tide-v1.2.3`, or similar).
+   - Download the ZIP archive and extract it.
+   - Open the extracted directory, for example `tide-1.2.4`.
+   - Rename the theme directory inside it to `tide`.
 
-3. Rename this directory to `tide`.
+   **b. Clone with Git**
 
-4. Move the renamed `tide` directory into your FOSSBilling themes folder: `FOSSBilling directory/themes`.
+   ```bash
+   git clone https://github.com/getnamingo/tide.git
+   ```
 
-5. Change the directory owner to the user your web server runs under. For example: `chown -Rf www-data:www-data tide/`.
+   This creates a directory named `tide`.
 
-6. Set permissions to `750` using chmod: `chmod -Rf 750 tide/`.
+2. Move the `tide` directory into your FOSSBilling themes directory:
 
-7. Navigate to `Settings -> Themes` in the FOSSBilling admin panel and select `tide` as the default theme.
+   ```bash
+   mv tide /var/www/themes/
+   ```
+
+   Replace `/var/www` with your FOSSBilling installation path if different.
+
+3. Set the correct owner and permissions:
+
+   ```bash
+   chown -Rf www-data:www-data /var/www/themes/tide
+   chmod -Rf 750 /var/www/themes/tide
+   ```
+
+4. In the FOSSBilling admin panel, go to `Settings -> Themes` and select `tide` as the default theme.
 
 ## Upgrade
 
-To upgrade to a newer version of the Tide theme, perform the following:
+1. Get the Tide theme using one of the following methods:
 
-1. Download or clone this repository.
+   **a. Download from GitHub**
 
-   - If you downloaded a ZIP file, extract it first.
-   - If you cloned the repository, locate the main project folder.
-  
-2. Inside the downloaded/cloned files, you will find a directory containing the theme files
-   (for example: `tide-main`, `tide-v1.2.3`, or similar).
+   - Download the ZIP archive and extract it.
+   - Open the extracted directory, for example `tide-1.2.4`.
+   - Rename the theme directory inside it to `tide`.
 
-3. Rename this directory to `tide`.
+   **b. Clone with Git**
 
-4. Backup your `FOSSBilling directory/themes/tide/config/settings_data.json` and any custom assets located at `FOSSBilling directory/themes/tide/assets/custom` and `FOSSBilling directory/themes/tide/html/custom`.
+   ```bash
+   git clone https://github.com/getnamingo/tide.git
+   ```
 
-5. Move the renamed `tide` directory into your FOSSBilling themes folder: `FOSSBilling directory/themes`, overwriting all files.
+   This creates a directory named `tide`.
 
-6. Restore your `settings_data.json` and any custom assets from the backup.
+2. Back up your existing Tide configuration and custom files:
 
-7. Change the directory owner to the web server user. For example: `chown -Rf www-data:www-data tide/`. Set permissions to `750` using chmod: `chmod -Rf 750 tide/`.
+   - `/var/www/themes/tide/config/settings_data.json`
+   - `/var/www/themes/tide/assets/custom`
+   - `/var/www/themes/tide/html/custom`
+
+   Replace `/var/www` with your FOSSBilling installation path if different.
+
+3. Replace the existing Tide theme with the new version:
+
+   ```bash
+   rm -rf /var/www/themes/tide
+   mv tide /var/www/themes/
+   ```
+
+4. Restore `settings_data.json` and any files from `assets/custom` and `html/custom` from your backup.
+
+5. Set the correct owner and permissions:
+
+   ```bash
+   chown -Rf www-data:www-data /var/www/themes/tide
+   chmod -Rf 750 /var/www/themes/tide
+   ```
 
 ### Upgrade from v1.1.3
 
