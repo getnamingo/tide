@@ -434,7 +434,7 @@ function resetEppUI() {
 
     value.textContent = MASKED_EPP;
     value.classList.add('text-muted');
-    value.classList.remove('fw-bold', 'text-dark');
+    value.classList.remove('fw-bold', 'text-body');
 
     btn.disabled = false;
     btn.classList.remove('btn-outline-success');
@@ -839,7 +839,7 @@ document.getElementById('epp-code-reveal').addEventListener('click', function (e
 
             value.textContent = code;
             value.classList.remove('text-muted');
-            value.classList.add('fw-bold', 'text-dark');
+            value.classList.add('fw-bold', 'text-body');
 
             Promise.resolve(navigator.clipboard && navigator.clipboard.writeText
                 ? navigator.clipboard.writeText(code)
