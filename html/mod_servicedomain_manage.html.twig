@@ -161,6 +161,64 @@
               </div>
 
               {% if domainx_enabled %}
+              <div class="card mb-4 d-none" id="glue-hosts" data-created-text="{{ 'Glue hostname created successfully'|trans }}" data-updated-text="{{ 'Glue hostname updated successfully'|trans }}" data-deleted-text="{{ 'Glue hostname deleted successfully'|trans }}" data-confirm-text="{{ 'Delete this glue hostname? It must first be removed from any domains using it.'|trans }}" data-address-required="{{ 'Enter an IP address to add or remove.'|trans }}" data-current-text="{{ 'Use as current'|trans }}" data-no-addresses="{{ 'No IP addresses were returned for this hostname.'|trans }}">
+                <div class="card-header">
+                  <div class="d-flex flex-column">
+                    <h3 class="card-title mb-1">{{ 'Glue Hostnames'|trans }}</h3>
+                    <div class="text-muted small">
+                      {{ 'Create and manage nameserver hostnames within this domain. Update nameserver assignments separately above.'|trans }}
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="btn-group mb-4" role="group" aria-label="{{ 'Glue hostname action'|trans }}">
+                    <button class="btn btn-primary" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
+                    <button class="btn btn-outline-primary" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
+                    <button class="btn btn-outline-primary" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
+                  </div>
+
+                  <form id="glue-form">
+                    <div class="mb-3">
+                      <label class="form-label required" for="glue-hostname">{{ 'Hostname'|trans }}</label>
+                      <input class="form-control" id="glue-hostname" type="text" placeholder="ns1.{{ service.domain }}" maxlength="253" autocapitalize="off" autocomplete="off" spellcheck="false" required>
+                      <div class="form-hint">{{ 'Enter a hostname inside this domain, such as ns1.example.com.'|trans }}</div>
+                    </div>
+
+                    <div id="glue-create-fields" class="mb-3">
+                      <label class="form-label required" for="glue-ip-address">{{ 'IP address (IPv4 or IPv6)'|trans }}</label>
+                      <input class="form-control" id="glue-ip-address" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false" required>
+                    </div>
+
+                    <div id="glue-update-fields" class="d-none mb-3">
+                      <button class="btn btn-sm btn-outline-secondary mb-3" id="glue-lookup" type="button">{{ 'Show current IP addresses'|trans }}</button>
+                      <div id="glue-info" class="d-none mb-3">
+                        <div class="text-muted small mb-2">{{ 'Current IP addresses at the registry'|trans }}</div>
+                        <div class="d-flex flex-wrap gap-2" id="glue-addresses"></div>
+                      </div>
+                      <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                          <label class="form-label" for="glue-current-ip">{{ 'Current IP address (remove)'|trans }}</label>
+                          <input class="form-control" id="glue-current-ip" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false">
+                        </div>
+                        <div class="col-12 col-md-6">
+                          <label class="form-label" for="glue-new-ip">{{ 'New IP address (add)'|trans }}</label>
+                          <input class="form-control" id="glue-new-ip" type="text" placeholder="2001:db8::1" autocapitalize="off" autocomplete="off" spellcheck="false">
+                        </div>
+                      </div>
+                      <div class="form-hint mt-2">{{ 'Fill only New to add, only Current to remove, or both to replace one address.'|trans }}</div>
+                    </div>
+
+                    <div id="glue-delete-note" class="alert alert-warning d-none mb-3">
+                      {{ 'The registry may reject deletion while a domain still uses this hostname.'|trans }}
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary" id="glue-submit" type="submit">{{ 'Create hostname'|trans }}</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
               <div class="card mb-4 d-none" id="dnssec" data-delete-text="{{ 'Delete'|trans }}" data-delete-confirm="{{ 'Remove this DNSSEC DS record?'|trans }}" data-added-text="{{ 'DNSSEC DS record added successfully'|trans }}" data-removed-text="{{ 'DNSSEC DS record removed successfully'|trans }}">
                 <div class="card-header">
                   <div class="d-flex flex-column">
@@ -521,6 +579,124 @@ document.addEventListener("DOMContentLoaded", function () {
     const dnssecEmpty = document.getElementById('dnssec-empty');
     const dnssecLimit = document.getElementById('dnssec-limit');
     const dnssecForm = document.getElementById('dnssec-add-form');
+    const glueCard = document.getElementById('glue-hosts');
+    const glueForm = document.getElementById('glue-form');
+    const glueHostname = document.getElementById('glue-hostname');
+    const glueIp = document.getElementById('glue-ip-address');
+    const glueCurrentIp = document.getElementById('glue-current-ip');
+    const glueNewIp = document.getElementById('glue-new-ip');
+    const glueSubmit = document.getElementById('glue-submit');
+    const glueLookup = document.getElementById('glue-lookup');
+    const glueInfo = document.getElementById('glue-info');
+    const glueAddresses = document.getElementById('glue-addresses');
+    const glueActions = Array.from(glueCard.querySelectorAll('[data-glue-action]'));
+    let glueAction = 'create';
+
+    function selectGlueAction(action) {
+        glueAction = action;
+        glueActions.forEach((button) => {
+            const selected = button.dataset.glueAction === action;
+            button.classList.toggle('btn-primary', selected);
+            button.classList.toggle('btn-outline-primary', !selected);
+            button.setAttribute('aria-pressed', String(selected));
+            if (selected) glueSubmit.textContent = button.textContent.trim();
+        });
+        document.getElementById('glue-create-fields').classList.toggle('d-none', action !== 'create');
+        document.getElementById('glue-update-fields').classList.toggle('d-none', action !== 'update');
+        document.getElementById('glue-delete-note').classList.toggle('d-none', action !== 'delete');
+        glueIp.required = action === 'create';
+        glueInfo.classList.add('d-none');
+    }
+
+    glueActions.forEach((button) => {
+        button.addEventListener('click', () => selectGlueAction(button.dataset.glueAction));
+    });
+    glueHostname.addEventListener('input', () => glueInfo.classList.add('d-none'));
+
+    function loadGlueAddresses() {
+        if (!glueHostname.reportValidity()) return;
+        const hostname = glueHostname.value.trim();
+        glueLookup.disabled = true;
+        glueInfo.classList.add('d-none');
+
+        FOSSBilling.api.client.post(
+            'domainx/glue_info',
+            { order_id: {{ order.id }}, hostname: hostname },
+            (result) => {
+                glueLookup.disabled = false;
+                if (glueAction !== 'update' || glueHostname.value.trim() !== hostname) return;
+
+                glueAddresses.replaceChildren();
+                const addresses = result && Array.isArray(result.ip_addresses) ? result.ip_addresses : [];
+                addresses.forEach((address) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-sm btn-outline-secondary font-monospace';
+                    button.textContent = String(address) + ' · ' + glueCard.dataset.currentText;
+                    button.addEventListener('click', () => { glueCurrentIp.value = String(address); });
+                    glueAddresses.appendChild(button);
+                });
+                if (!addresses.length) {
+                    glueAddresses.textContent = glueCard.dataset.noAddresses;
+                }
+                glueInfo.classList.remove('d-none');
+            },
+            (err) => {
+                glueLookup.disabled = false;
+                apiFailToast(err);
+            }
+        );
+    }
+
+    glueLookup.addEventListener('click', loadGlueAddresses);
+
+    glueForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (!glueForm.reportValidity()) return;
+
+        const action = glueAction;
+        const data = { order_id: {{ order.id }}, hostname: glueHostname.value.trim() };
+        if (action === 'create') {
+            data.ip_address = glueIp.value.trim();
+        } else if (action === 'update') {
+            const currentIp = glueCurrentIp.value.trim();
+            const newIp = glueNewIp.value.trim();
+            if (!currentIp && !newIp) {
+                FOSSBilling.message(glueCard.dataset.addressRequired);
+                return;
+            }
+            if (currentIp) data.current_ip_address = currentIp;
+            if (newIp) data.new_ip_address = newIp;
+        } else if (!window.confirm(glueCard.dataset.confirmText + '\n\n' + data.hostname)) {
+            return;
+        }
+
+        glueSubmit.disabled = true;
+        FOSSBilling.api.client.post(
+            'domainx/glue_' + action,
+            data,
+            () => {
+                glueSubmit.disabled = false;
+                const messages = {
+                    create: glueCard.dataset.createdText,
+                    update: glueCard.dataset.updatedText,
+                    delete: glueCard.dataset.deletedText
+                };
+                FOSSBilling.message(messages[action]);
+                glueInfo.classList.add('d-none');
+                if (action === 'create') glueIp.value = '';
+                if (action === 'update') {
+                    glueCurrentIp.value = '';
+                    glueNewIp.value = '';
+                }
+                if (action === 'delete') glueHostname.value = '';
+            },
+            (err) => {
+                glueSubmit.disabled = false;
+                apiFailToast(err);
+            }
+        );
+    });
 
     function appendDnssecCell(row, value, className) {
         const cell = document.createElement('td');
@@ -552,7 +728,7 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             () => {
                 FOSSBilling.message(dnssecCard.dataset.removedText);
-                loadDnssecRecords();
+                loadDomainxCapabilities();
             },
             (err) => {
                 button.disabled = false;
@@ -610,17 +786,16 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-    function loadDnssecRecords() {
+    function loadDomainxCapabilities() {
         FOSSBilling.api.client.post(
             'domainx/capabilities',
             {
                 order_id: {{ order.id }}
             },
             (result) => {
-                const feature =
-                    result
-                    && result.features
-                    && result.features.dnssec;
+                const features = result && result.features || {};
+                const feature = features.dnssec;
+                glueCard.classList.toggle('d-none', !features.glue || !features.glue.available);
 
                 if (!feature || !feature.available) {
                     dnssecCard.classList.add('d-none');
@@ -632,6 +807,7 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             () => {
                 dnssecCard.classList.add('d-none');
+                glueCard.classList.add('d-none');
             }
         );
     }
@@ -639,10 +815,10 @@ document.addEventListener("DOMContentLoaded", function () {
     window.domainxDnssecAdded = function () {
         FOSSBilling.message(dnssecCard.dataset.addedText);
         dnssecForm.reset();
-        loadDnssecRecords();
+        loadDomainxCapabilities();
     };
 
-    loadDnssecRecords();
+    loadDomainxCapabilities();
     {% endif %}
 });
 
