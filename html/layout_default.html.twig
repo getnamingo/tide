@@ -319,32 +319,9 @@
                     <li class="nav-item{% if current_active_menu == 'invoices' %} active{% endif %}">
                       <a class="nav-link" href="{{ '/invoice'|url }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M13 17l2 0" /></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" /></svg>
                         </span>
                         <span class="nav-link-title"> {{ 'Invoices'|trans }} </span>
-                      </a>
-                    </li>
-                    {% endif %}
-
-                    {% if guest.extension_is_on({"mod":"news"}) %}
-                    <li class="nav-item{% if current_active_menu == 'news' %} active{% endif %}">
-                      <a class="nav-link" href="{{ '/news'|url }}">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11" /><path d="M8 8l4 0" /><path d="M8 12l4 0" /><path d="M8 16l4 0" /></svg>
-                        </span>
-                        <span class="nav-link-title"> {{ 'Announcements'|trans }} </span>
-                      </a>
-                    </li>
-                    {% endif %}
-                    
-                    {% if guest.support_kb_enabled() %}
-                    <li class="nav-item{% if current_active_menu == 'kb' %} active{% endif %}">
-                      <a class="nav-link" href="{{ 'support/kb'|url }}">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block"
-                          >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6l0 13" /><path d="M12 6l0 13" /><path d="M21 6l0 13" /></svg>
-                         </span>
-                        <span class="nav-link-title"> {{ 'Knowledge Base'|trans }} </span>
                       </a>
                     </li>
                     {% endif %}
@@ -360,25 +337,42 @@
                     </li>
                     {% endif %}
 
-                    {% if not client %}
-                    <li class="nav-item{% if current_active_menu == 'support' %} active{% endif %}">
-                      <a class="nav-link" href="{{ '/support/contact-us'|url }}">
+                    <li class="nav-item dropdown{% if current_active_menu in ['support', 'kb', 'news'] %} active{% endif %}">
+                      <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
+                          {% if not client %}
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 9h8" /><path d="M8 13h6" /><path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12" /></svg>
+                          {% else %}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M15 15l3.35 3.35" /><path d="M9 15l-3.35 3.35" /><path d="M5.65 5.65l3.35 3.35" /><path d="M18.35 5.65l-3.35 3.35" /></svg>
+                          {% endif %}
                         </span>
-                        <span class="nav-link-title"> {{ 'Contact us'|trans }} </span>
-                      </a>
-                    </li>
-                    {% else %}
-                    <li class="nav-item{% if current_active_menu == 'support' %} active{% endif %}">
-                      <a class="nav-link" href="{{ '/support'|url }}">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M15 15l3.35 3.35" /><path d="M9 15l-3.35 3.35" /><path d="M5.65 5.65l3.35 3.35" /><path d="M18.35 5.65l-3.35 3.35" /></svg>
+                        <span class="nav-link-title">
+                          {% if not client %}{{ 'Contact us'|trans }}{% else %}{{ 'Support'|trans }}{% endif %}
                         </span>
-                        <span class="nav-link-title"> {{ 'Support'|trans }} </span>
                       </a>
+                      <div class="dropdown-menu">
+                        {% if not client %}
+                        <a class="dropdown-item" href="{{ '/support/contact-us'|url }}">
+                          {{ 'Contact us'|trans }}
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item" href="{{ '/support'|url }}">
+                          {{ 'Support Tickets'|trans }}
+                        </a>
+                        {% endif %}
+                        {% if guest.support_kb_enabled() %}
+                        <a class="dropdown-item" href="{{ 'support/kb'|url }}">
+                          {{ 'Knowledge Base'|trans }}
+                        </a>
+                        {% endif %}
+                        {% if guest.extension_is_on({"mod":"news"}) %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ '/news'|url }}">
+                          {{ 'Announcements'|trans }}
+                        </a>
+                        {% endif %}
+                      </div>
                     </li>
-                    {% endif %}
 
                     {% if not client %}
                       <li class="nav-item d-md-none mt-3 pt-3 px-3 pb-3 border-top w-100">
