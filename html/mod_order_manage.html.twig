@@ -100,7 +100,7 @@
                 </div>
                 <div class="card-footer">
                     {% if order.period and order.status != 'failed_renew' %}
-                        <a class="btn btn-primary btn-sm"
+                        <a class="btn btn-success btn-sm"
                            {{ fb_api_link({href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}), modal: {type: 'confirm', title: 'Are you sure?'|trans, content: 'This will generate new invoice. Are you sure you want to continue?'|trans}, callback: 'onRenewalInvoiceCreated'}) }}>{{ 'Renew Now'|trans }}</a>
                         <script>window.onRenewalInvoiceCreated = (hash) => { window.location = "{{ 'invoice'|url }}/" + hash; };</script>
                     {% endif %}
