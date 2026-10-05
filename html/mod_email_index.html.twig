@@ -21,8 +21,9 @@
                 </div>
                 <div class="card-body p-0">
                     {% if emails.list is empty %}
-                    <div class="m-2 alert alert-info"
-                         id="information-block">{{ 'There are no emails to display'|trans }}</div>
+                    <div class="text-center py-5">
+                        <span class="m-0">{{ 'There are no emails to display'|trans }}</span>
+                    </div>
                     {% else %}
                     <div class="d-flex">
                         <div class="nav nav-tabs flex-column col-md-4 border-0">

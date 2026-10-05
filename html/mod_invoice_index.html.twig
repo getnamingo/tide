@@ -1,107 +1,243 @@
 {% extends request.ajax ? "layout_blank.html.twig" : "layout_default.html.twig" %}
 {% set active_menu = 'invoices' %}
 
+{% import "macro_functions.html.twig" as mf %}
+
 {% block meta_title %}{{ 'Invoice Management'|trans }}{% endblock %}
 {% block page_header %}{{ 'Invoice Management'|trans }}{% endblock %}
 
 {% block body_class %}invoice-index{% endblock %}
+
 {% block breadcrumb %}
     <li class="breadcrumb-item active" aria-current="page">{{ 'Invoices'|trans }}</li>
 {% endblock %}
 
 {% block content %}
-    {% set unpaid_invoices = client.invoice_get_list({"status":"unpaid", "per_page":10, "page":request.page}) %}
-    {% set paid_invoices = client.invoice_get_list({"per_page":10, "page":request.page, "status":"paid"}) %}
+    {% set invoice_status = request.invoice_status|default('all') %}
+    {% set allowed_statuses = ['all', 'unpaid', 'paid', 'refunded', 'canceled'] %}
+
+    {% if invoice_status not in allowed_statuses %}
+        {% set invoice_status = 'all' %}
+    {% endif %}
+
+    {% set invoice_request = {
+        'per_page': 15,
+        'page': request.page
+    } %}
+
+    {% if invoice_status != 'all' %}
+        {% set invoice_request = invoice_request|merge({
+            'status': invoice_status
+        }) %}
+    {% endif %}
+
+    {% set invoices = client.invoice_get_list(invoice_request) %}
+
+    {# Only used for the useful "needs attention" count. #}
+    {% set unpaid_invoices = client.invoice_get_list({
+        'status': 'unpaid',
+        'per_page': 1,
+        'page': 1
+    }) %}
+
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header py-3 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
+
+                <div class="card-header py-3">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 w-100">
                         <div>
-                            <h1 class="mb-1">{{ 'Invoices'|trans }}</h1>
-                            <span class="small text-muted">
-                                {{ 'All of your invoices can be found here. You can choose to see either paid or unpaid invoices by clicking corresponding button.'|trans }}
-                            </span>
+                            <h1 class="card-title mb-1">
+                                {{ 'Invoices'|trans }}
+                            </h1>
+
+                            <div class="text-muted">
+                                {{ 'View your invoices, payment status and due dates.'|trans }}
+                            </div>
                         </div>
+
+                        {% if unpaid_invoices.total %}
+                            <div>
+                                <span class="badge bg-warning text-warning-fg">
+                                    {{ unpaid_invoices.total }}
+                                    {{ unpaid_invoices.total == 1 ? 'invoice awaiting payment'|trans : 'invoices awaiting payment'|trans }}
+                                </span>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="card-body">
-                    <nav>
-                        <div class="nav nav-tabs" id="invoice-tab" role="tablist">
-                            <button class="nav-link active" id="unpaid-tab" data-bs-toggle="tab"
-                                    data-bs-target="#nav-unpaid" type="button" role="tab" aria-controls="nav-unpaid"
-                                    aria-selected="true">{{ 'Unpaid'|trans }}{% if unpaid_invoices.total %}&nbsp;<span
-                                    class="badge text-bg-danger">{{ unpaid_invoices.total }}</span>{% endif %}</button>
-                            <button class="nav-link" id="paid-tab" data-bs-toggle="tab" data-bs-target="#nav-paid"
-                                    type="button" role="tab" aria-controls="nav-paid"
-                                    aria-selected="false">{{ 'Paid'|trans }}{% if paid_invoices.total %}&nbsp;<span
-                                    class="badge text-bg-secondary">{{ paid_invoices.total }}</span>{% endif %}</button>
-                        </div>
-                    </nav>
-                    <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active table-responsive" id="nav-unpaid" role="tabpanel"
-                             aria-labelledby="nav-home-tab" tabindex="0">
-                            <table class="table table-bordered table-hover">
-                                <thead>
+
+                {# Filters #}
+                <div class="card-header py-2">
+                    <div class="btn-list">
+
+                        <a
+                            href="{{ 'invoice'|url }}"
+                            class="btn btn-sm {{ invoice_status == 'all' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                        >
+                            {{ 'All'|trans }}
+                        </a>
+
+                        <a
+                            href="{{ 'invoice'|url(query: {'invoice_status': 'unpaid'}) }}"
+                            class="btn btn-sm {{ invoice_status == 'unpaid' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                        >
+                            {{ 'Unpaid'|trans }}
+
+                            {% if unpaid_invoices.total %}
+                                <span class="badge bg-warning text-warning-fg ms-1">
+                                    {{ unpaid_invoices.total }}
+                                </span>
+                            {% endif %}
+                        </a>
+
+                        <a
+                            href="{{ 'invoice'|url(query: {'invoice_status': 'paid'}) }}"
+                            class="btn btn-sm {{ invoice_status == 'paid' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                        >
+                            {{ 'Paid'|trans }}
+                        </a>
+
+                        <a
+                            href="{{ 'invoice'|url(query: {'invoice_status': 'refunded'}) }}"
+                            class="btn btn-sm {{ invoice_status == 'refunded' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                        >
+                            {{ 'Refunded'|trans }}
+                        </a>
+
+                        <a
+                            href="{{ 'invoice'|url(query: {'invoice_status': 'canceled'}) }}"
+                            class="btn btn-sm {{ invoice_status == 'canceled' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                        >
+                            {{ 'Canceled'|trans }}
+                        </a>
+
+                    </div>
+                </div>
+
+                {% if invoices.list %}
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover">
+
+                            <thead>
                                 <tr>
-                                    <th>{{ 'Title'|trans }}</th>
+                                    <th>{{ 'Invoice'|trans }}</th>
                                     <th>{{ 'Invoice Date'|trans }}</th>
-                                    <th>{{ 'Due Date'|trans }}</th>
-                                    <th>{{ 'Total'|trans }}</th>
-                                    <th>{{ 'Actions'|trans }}</th>
+                                    <th>{{ 'Due / Paid'|trans }}</th>
+                                    <th>{{ 'Status'|trans }}</th>
+                                    <th class="text-end">{{ 'Total'|trans }}</th>
+                                    <th class="w-1"></th>
                                 </tr>
-                                </thead>
-                                <tbody>
-                                {% for i, invoice in unpaid_invoices.list %}
+                            </thead>
+
+                            <tbody>
+                                {% for invoice in invoices.list %}
+                                    {% set status = invoice.status|default('unpaid') %}
+
+                                    {% set is_overdue =
+                                        status == 'unpaid'
+                                        and invoice.due_at
+                                        and invoice.due_at|date('U') < 'now'|date('U')
+                                    %}
+
                                     <tr>
-                                        <td>{{ 'Invoice'|trans }} #{{ invoice.serie ~ "%05s"|format(invoice.nr) }}</td>
-                                        <td>{{ invoice.created_at|date("Y-m-d") }}</td>
-                                        <td>{{ invoice.due_at|date("Y-m-d") }}</td>
-                                        <td>{{ invoice.total|format_currency(invoice.currency ?? default_currency) }}</td>
-                                        <td><a class="btn btn-sm btn-success" href='{{ "invoice/#{invoice.hash}"|url }}'>{{ 'Pay'|trans }}</a>
+                                        {# Invoice #}
+                                        <td>
+                                            <a href="{{ "invoice/#{invoice.hash}"|url }}" class="text-primary fw-semibold">
+                                                {{ 'Invoice'|trans }}
+                                                #{{ invoice.serie ~ "%05s"|format(invoice.nr) }}
+                                            </a>
+                                        </td>
+
+                                        {# Created #}
+                                        <td class="text-muted">
+                                            {{ invoice.created_at|date("Y-m-d") }}
+                                        </td>
+
+                                        {# Context-sensitive date #}
+                                        <td>
+                                            {% if status == 'paid' and invoice.paid_at %}
+                                                <div>
+                                                    {{ invoice.paid_at|date("Y-m-d") }}
+                                                </div>
+                                                <div class="small text-muted">
+                                                    {{ 'Paid'|trans }}
+                                                </div>
+                                            {% elseif status == 'unpaid' and invoice.due_at %}
+                                                <div class="{{ is_overdue ? 'text-danger fw-medium' : '' }}">
+                                                    {{ invoice.due_at|date("Y-m-d") }}
+                                                </div>
+                                                <div class="small {{ is_overdue ? 'text-danger' : 'text-muted' }}">
+                                                    {{ is_overdue ? 'Overdue'|trans : 'Due date'|trans }}
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+
+                                        {# Status #}
+                                        <td>
+                                            {{ mf.status_badge(is_overdue ? 'overdue' : status, 'invoice') }}
+                                        </td>
+
+                                        {# Total #}
+                                        <td class="text-end fw-medium text-nowrap">
+                                            {{ invoice.total|format_currency(
+                                                invoice.currency ?? default_currency
+                                            ) }}
+                                        </td>
+
+                                        {# Action #}
+                                        <td class="text-end text-nowrap">
+                                            {% if status == 'unpaid' %}
+                                                <a class="btn btn-sm btn-success" href="{{ "invoice/#{invoice.hash}"|url }}">
+                                                    {{ 'Pay'|trans }}
+                                                </a>
+                                            {% else %}
+                                                <a class="btn btn-sm btn-outline-secondary" href="{{ "invoice/#{invoice.hash}"|url }}">
+                                                    {{ 'View'|trans }}
+                                                </a>
+                                            {% endif %}
                                         </td>
                                     </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="5">{{ 'The list is empty'|trans }}</td>
-                                    </tr>
                                 {% endfor %}
-                                </tbody>
-                            </table>
-                            {{ include('partial_pagination.html.twig', { 'list': unpaid_invoices, 'url': 'invoice' }) }}
-                        </div>
-                        <div class="tab-pane fade table-responsive" id="nav-paid" role="tabpanel" aria-labelledby="nav-profile-tab"
-                             tabindex="0">
-                            <table class="table table-bordered table-hover">
-                                <thead>
-                                <tr>
-                                    <th>{{ 'Title'|trans }}</th>
-                                    <th>{{ 'Invoice Date'|trans }}</th>
-                                    <th>{{ 'Paid Date'|trans }}</th>
-                                    <th>{{ 'Total'|trans }}</th>
-                                    <th>{{ 'Actions'|trans }}</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for i, invoice in paid_invoices.list %}
-                                    <tr>
-                                        <td>{{ 'Invoice'|trans }} #{{ invoice.serie ~ "%05s"|format(invoice.nr) }}</td>
-                                        <td>{{ invoice.created_at|date("Y-m-d") }}</td>
-                                        <td>{{ invoice.paid_at|date("Y-m-d") }}</td>
-                                        <td>{{ invoice.total|format_currency(invoice.currency ?? default_currency) }}</td>
-                                        <td><a href='{{ "invoice/#{invoice.hash}"|url }}' class="btn btn-outline-secondary btn-sm">{{ 'View'|trans }}</a></td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="7">{{ 'The list is empty'|trans }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                            {{ include('partial_pagination.html.twig', { 'list': paid_invoices, 'url': 'invoice', 'hash': '#nav-paid' }) }}
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+
+                    {% if invoices.pages > 1 %}
+                        <div class="card-footer d-flex justify-content-end">
+                            {{ include('partial_pagination.html.twig', {
+                                'list': invoices,
+                                'url': 'invoice'
+                            }) }}
+                        </div>
+                    {% endif %}
+
+                {% else %}
+                    <div class="card-body text-center py-5">
+
+                        <div class="h3 mb-2">
+                            {{ 'No invoices found'|trans }}
+                        </div>
+
+                        <div class="text-muted">
+                            {% if invoice_status == 'all' %}
+                                {{ 'You do not have any invoices yet.'|trans }}
+                            {% else %}
+                                {{ 'There are no invoices with this status.'|trans }}
+                            {% endif %}
+                        </div>
+
+                        {% if invoice_status != 'all' %}
+                            <div class="mt-3">
+                                <a href="{{ 'invoice'|url }}" class="btn btn-outline-secondary">
+                                    {{ 'View all invoices'|trans }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
