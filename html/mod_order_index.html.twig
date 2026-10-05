@@ -93,7 +93,9 @@
                                 <img src="{{ product.icon_url }}" alt="{{ product.title }}" style="max-height: 42px;" class="img-fluid">
                             </div>
                             {% endif %}
+                            {% if settings.show_product_type_names|default('0') %}
                             <div class="text-uppercase text-muted font-weight-medium mb-4">{{ product.type }}</div>
+                            {% endif %}
                             <h3>{{ product.title }}</h3>
                             {% if product.type != 'domain' and product.price_starting_from is defined and product.price_starting_from is not empty %}
                               <div class="h2 my-3">{{ product.price_starting_from|format_currency(cart_currency ?? default_currency) }}</div>
