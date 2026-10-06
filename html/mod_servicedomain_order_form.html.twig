@@ -374,13 +374,10 @@ function unlockDomainInput() {
   input.focus();
 }
 
-const currencyFormat = JSON.parse('{{ currency|json_encode|e('js') }}');
+const currencyFormat = JSON.parse('{{ cart_currency|json_encode|e('js') }}');
 
 function formatMoney(amount) {
-    return FOSSBilling.currency.format(total, {
-        ...currencyFormat,
-        code: code,
-    });
+    return FOSSBilling.currency.format(Number(amount), currencyFormat);
 }
 
 function fadeIn(el, display = 'block', durationMs = 150) {
@@ -689,11 +686,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         years === 1 ? regPrice : regPrice + (years - 1) * renewPrice;
 
                     const convertedPrice = totalPrice * conversionRate;
-
-                    const formattedPrice = new Intl.NumberFormat(undefined, {
-                        style: 'currency',
-                        currency: '{{ cart_currency.code }}'
-                    }).format(convertedPrice);
+                    const formattedPrice = formatMoney(convertedPrice);
 
                     const label = years === 1
                         ? `${years} {{ 'year'|trans }}`
@@ -736,8 +729,11 @@ document.addEventListener("DOMContentLoaded", () => {
             'servicedomain/pricing',
             { tld: tld },
             function (result) {
+                const conversionRate = Number('{{ currency.conversion_rate|default(1) }}');
 
-                const price = formatMoney(Number(result.price_transfer) * {{ currency.conversion_rate }});
+                const price = formatMoney(
+                    Number(result.price_transfer) * conversionRate
+                );
 
                 const transferPriceEl = document.getElementById('transfer-price');
                 if (transferPriceEl) {
@@ -749,9 +745,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (nextBtnWrap) {
                     nextBtnWrap.style.display = '';
                 }
+
                 showFooter();
 
-                const nextBtn = nextBtnWrap ? nextBtnWrap.querySelector('button[type="submit"]') : null;
+                const nextBtn = nextBtnWrap
+                    ? nextBtnWrap.querySelector('button[type="submit"]')
+                    : null;
+
                 if (nextBtn) {
                     nextBtn.disabled = false;
                 }
