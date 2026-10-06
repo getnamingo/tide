@@ -336,15 +336,28 @@
             {% if dns_order %}
               <div class="card mb-4 d-none" id="dns-hosting">
                 <div class="card-header">
-                  <div class="d-flex flex-column">
-                    <h3 class="card-title mb-1">{{ 'DNS Hosting'|trans }}</h3>
-                    <div class="text-muted small">
-                      {{ 'Manage DNS records for this domain.'|trans }}
+                  <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="d-flex flex-column">
+                      <h3 class="card-title mb-1">{{ 'DNS Hosting'|trans }}</h3>
+                      <div class="text-muted small">
+                        {{ 'Manage DNS records for this domain.'|trans }}
+                      </div>
                     </div>
+
+                    <span id="linked-dnssec-status" class="badge d-none"></span>
                   </div>
                 </div>
 
                 <div class="card-body">
+                  <div id="linked-dnssec-ds-section" class="d-none mb-4">
+                    <div class="fw-medium mb-1">{{ 'DNSSEC DS Records'|trans }}</div>
+                    <div class="text-secondary small mb-3">
+                      {{ 'Publish these DS records at your domain registrar:'|trans }}
+                    </div>
+
+                    <div id="linked-dnssec-ds"></div>
+                  </div>
+
                   <a
                     class="btn btn-outline-primary btn-sm w-100"
                     href='{{ "order/service/manage/#{dns_order.id}"|url }}'>
@@ -772,6 +785,92 @@ document.getElementById('domain-sync').addEventListener('click', function (event
     );
 });
 
+{% if dns_order %}
+function formatLinkedDsRecord(record) {
+    if (typeof record === 'string') {
+        return record;
+    }
+
+    if (record && typeof record === 'object') {
+        const keyTag = record.key_tag ?? record.keytag ?? record.keyTag;
+        const algorithm = record.algorithm;
+        const digestType = record.digest_type ?? record.digestType;
+        const digest = record.digest;
+
+        if (
+            keyTag !== undefined &&
+            algorithm !== undefined &&
+            digestType !== undefined &&
+            digest !== undefined
+        ) {
+            return `${keyTag} ${algorithm} ${digestType} ${digest}`;
+        }
+    }
+
+    return String(record);
+}
+
+function loadLinkedDnssec() {
+    FOSSBilling.api.client.post(
+        'servicedns/dnssec',
+        { order_id: {{ dns_order.id }} },
+        (result) => {
+            if (!result || !result.supported) {
+                return;
+            }
+
+            const badge = document.getElementById('linked-dnssec-status');
+
+            badge.textContent = result.enabled
+                ? "{{ 'DNSSEC Enabled'|trans|e('js') }}"
+                : "{{ 'DNSSEC Disabled'|trans|e('js') }}";
+
+            badge.className = result.enabled
+                ? 'badge bg-green-lt text-green'
+                : 'badge bg-red-lt text-red';
+
+            const section = document.getElementById('linked-dnssec-ds-section');
+            const container = document.getElementById('linked-dnssec-ds');
+
+            container.replaceChildren();
+
+            const records = Array.isArray(result.ds) ? result.ds : [];
+
+            if (!result.enabled || !records.length) {
+                section.classList.add('d-none');
+                return;
+            }
+
+            records.forEach((record) => {
+                const value = formatLinkedDsRecord(record);
+
+                const row = document.createElement('div');
+                row.className = 'd-flex align-items-center justify-content-between gap-2 mb-2';
+
+                const code = document.createElement('code');
+                code.className = 'text-body text-break';
+                code.textContent = value;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-sm btn-outline-secondary';
+                button.textContent = "{{ 'Copy'|trans|e('js') }}";
+
+                button.addEventListener('click', () => {
+                    navigator.clipboard.writeText(value);
+                });
+
+                row.appendChild(code);
+                row.appendChild(button);
+                container.appendChild(row);
+            });
+
+            section.classList.remove('d-none');
+        }
+    );
+}
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function () {
     const domainPanels = ['nameservers', 'glue-hosts', 'dnssec', 'dns-hosting'];
     const domainPanelButtons = Array.from(
@@ -1079,6 +1178,10 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     loadDomainxCapabilities();
+    {% endif %}
+
+    {% if dns_order %}
+    loadLinkedDnssec();
     {% endif %}
 });
 
