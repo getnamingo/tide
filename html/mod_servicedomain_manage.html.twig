@@ -2,6 +2,24 @@
 
 {% if order.status == 'active' or order.status == 'failed_renew' %}
     {% set domainx_enabled = guest.extension_is_on({"mod":"domainx"}) %}
+    {% set servicedns_enabled = guest.extension_is_on({"mod":"servicedns"}) %}
+    {% set dns_order = null %}
+
+    {% if servicedns_enabled %}
+        {% set dns_orders = client.order_get_list({
+            "type": "dns",
+            "status": "active",
+            "title": "DNS: " ~ service.domain,
+            "per_page": 10
+        }) %}
+
+        {% for candidate in dns_orders.list %}
+            {% if candidate.config.domain_name|default('')|lower == service.domain|lower %}
+                {% set dns_order = candidate %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
     <link rel="stylesheet" href="{{ 'libs/intl-tel-input/dist/css/intlTelInput.min.css'|asset_url }}">
     <style>
     .iti {
@@ -100,6 +118,15 @@
                     id="domain-panel-dnssec-button"
                     data-domain-panel="dnssec">
                     {{ 'DNSSEC'|trans }}
+                  </button>
+                {% endif %}
+
+                {% if dns_order %}
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-domain-panel="dns-hosting">
+                    {{ 'DNS'|trans }}
                   </button>
                 {% endif %}
               </div>
@@ -305,6 +332,65 @@
                 </div>
               </div>
             {% endif %}
+
+            {% if dns_order %}
+              <div class="card mb-4 d-none" id="dns-hosting">
+                <div class="card-header">
+                  <div class="d-flex flex-column">
+                    <h3 class="card-title mb-1">{{ 'DNS Hosting'|trans }}</h3>
+                    <div class="text-muted small">
+                      {{ 'Manage DNS records for this domain.'|trans }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <a
+                    class="btn btn-outline-primary btn-sm w-100"
+                    href='{{ "order/service/manage/#{dns_order.id}"|url }}'>
+                    {{ 'Manage DNS'|trans }}
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+            
+            <div class="card">
+              <div class="card-body">
+              <div class="row align-items-start">
+                <div class="col-auto">
+                     <span class="avatar bg-secondary-lt text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1 -4.069 0l-.301 -.301l-6.558 6.558a2 2 0 0 1 -1.239 .578l-.175 .008h-1.172a1 1 0 0 1 -.993 -.883l-.007 -.117v-1.172a2 2 0 0 1 .467 -1.284l.119 -.13l.414 -.414h2v-2h2v-2l2.144 -2.144l-.301 -.301a2.877 2.877 0 0 1 0 -4.069l2.643 -2.643a2.877 2.877 0 0 1 4.069 0" /><path d="M15 9h.01" /></svg>
+                     </span>
+                </div>
+
+                  <div class="col">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                      <h3 class="card-title mb-0">{{ 'Transfer code'|trans }}</h3>
+                    </div>
+
+                    <div class="text-secondary mt-3">
+                      {{ 'Use the authorization code to transfer your domain. Keep it private.'|trans }}
+                    </div>
+
+                    <div class="mt-4 d-flex align-items-center gap-2">
+                      <div
+                        id="epp-code-value"
+                        class="form-control font-monospace text-muted d-flex align-items-center"
+                        style="min-height: 2.5rem;">
+                        ••••••••••••
+                      </div>
+
+                      <button
+                        id="epp-code-reveal"
+                        type="button"
+                        class="btn btn-outline-secondary text-nowrap">
+                        {{ 'Reveal'|trans }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="col-12 col-lg-6">
@@ -376,7 +462,7 @@
                         </div>
 
                         <div class="col-md-6">
-                          <label for="whois_phone" class="form-label">{{ 'Phone number'|trans }}</label>
+                          <label for="whois_phone" class="form-label">{{ 'Phone Number'|trans }}</label>
                           <input type="hidden" name="contact[phone_cc]" id="whois_phone_cc" value="{{ request.phone_cc|default(service.contact.phone_cc) }}">
                           <input class="form-control js-phone-input" type="tel" name="contact[phone]" id="whois_phone" value="{{ request.phone|default(service.contact.phone) }}" autocomplete="tel" data-initial-country="{{ request.country|default(service.contact.country)|lower }}" required>
                         </div>
@@ -393,7 +479,7 @@
 
         <div class="row row-cards">
           {# Transfer Lock #}
-          <div class="col-12 col-lg-4">
+          <div class="col-12 col-lg-6">
             <div class="card h-100">
               <div class="card-body">
 
@@ -450,7 +536,7 @@
           </div>
 
           {# Privacy Protection #}
-          <div class="col-12 col-lg-4">
+          <div class="col-12 col-lg-6">
             <div class="card h-100">
               <div class="card-body">
 
@@ -502,50 +588,6 @@
                   </div>
                 </div>
 
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-lg-4">
-            <div class="card h-100">
-              <div class="card-body">
-              <div class="row align-items-start">
-                <div class="col-auto">
-                     <span class="avatar bg-secondary-lt text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1 -4.069 0l-.301 -.301l-6.558 6.558a2 2 0 0 1 -1.239 .578l-.175 .008h-1.172a1 1 0 0 1 -.993 -.883l-.007 -.117v-1.172a2 2 0 0 1 .467 -1.284l.119 -.13l.414 -.414h2v-2h2v-2l2.144 -2.144l-.301 -.301a2.877 2.877 0 0 1 0 -4.069l2.643 -2.643a2.877 2.877 0 0 1 4.069 0" /><path d="M15 9h.01" /></svg>
-                     </span>
-                </div>
-
-                  <div class="col">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                      <h3 class="card-title mb-0">{{ 'Transfer code'|trans }}</h3>
-
-                      <span class="badge bg-green-lt text-green">
-                        {{ 'Available'|trans }}
-                      </span>
-                    </div>
-
-                    <div class="text-secondary mt-3">
-                      {{ 'Use the authorization code to transfer your domain. Keep it private.'|trans }}
-                    </div>
-
-                    <div class="mt-4 d-flex align-items-center gap-2">
-                      <div
-                        id="epp-code-value"
-                        class="form-control font-monospace text-muted d-flex align-items-center"
-                        style="min-height: 2.5rem;">
-                        ••••••••••••
-                      </div>
-
-                      <button
-                        id="epp-code-reveal"
-                        type="button"
-                        class="btn btn-outline-secondary text-nowrap">
-                        {{ 'Reveal'|trans }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -731,7 +773,7 @@ document.getElementById('domain-sync').addEventListener('click', function (event
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    const domainPanels = ['nameservers', 'glue-hosts', 'dnssec'];
+    const domainPanels = ['nameservers', 'glue-hosts', 'dnssec', 'dns-hosting'];
     const domainPanelButtons = Array.from(
         document.querySelectorAll('[data-domain-panel]')
     );
@@ -756,6 +798,13 @@ document.addEventListener("DOMContentLoaded", function () {
             selectDomainPanel(button.dataset.domainPanel);
         });
     });
+
+    const dnsHostingAvailable = {{ dns_order ? 'true' : 'false' }};
+
+    if (dnsHostingAvailable) {
+        document.getElementById('domain-settings-switcher')
+            .classList.remove('d-none');
+    }
 
     {% if domainx_enabled %}
     const dnssecCard = document.getElementById('dnssec');
@@ -989,7 +1038,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 dnssecButton.classList.toggle('d-none', !dnssecAvailable);
 
                 document.getElementById('domain-settings-switcher')
-                    .classList.toggle('d-none', !glueAvailable && !dnssecAvailable);
+                .classList.toggle(
+                    'd-none',
+                    !glueAvailable && !dnssecAvailable && !dnsHostingAvailable
+                );
 
                 if (!glueAvailable) {
                     glueCard.classList.add('d-none');
@@ -1011,8 +1063,10 @@ document.addEventListener("DOMContentLoaded", function () {
             () => {
                 dnssecButton.classList.add('d-none');
                 glueButton.classList.add('d-none');
-                document.getElementById('domain-settings-switcher')
-                    .classList.add('d-none');
+                if (!dnsHostingAvailable) {
+                    document.getElementById('domain-settings-switcher')
+                        .classList.add('d-none');
+                }
                 selectDomainPanel('nameservers');
             }
         );
