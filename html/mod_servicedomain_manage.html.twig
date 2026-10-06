@@ -1,3 +1,5 @@
+{% import "macro_functions.html.twig" as mf %}
+
 {% if order.status == 'active' or order.status == 'failed_renew' %}
     {% set domainx_enabled = guest.extension_is_on({"mod":"domainx"}) %}
     <link rel="stylesheet" href="{{ 'libs/intl-tel-input/dist/css/intlTelInput.min.css'|asset_url }}">
@@ -6,7 +8,6 @@
         display: block;
         width: 100%;
     }
-
     .iti .form-control,
     .iti__tel-input {
         width: 100%;
@@ -14,38 +15,53 @@
     </style>
 
     <div class="card mb-4">
-      <div class="card-header">
-        <div class="d-flex align-items-center justify-content-between w-100">
-          <div>
-            <h1 class="mb-1">{{ 'Manage'|trans }} {{ service.domain }}</h1>
+      <div class="card-header py-3">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap w-100">
+          <div class="flex-fill">
+            <h1 class="mb-1">
+              {{ service.domain }} {{ mf.status_badge(order.status, 'order') }}
+            </h1>
+            {% if order.period and order.expires_at %}
+              <div class="d-flex align-items-center gap-2 small text-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
+                <span>
+                  {{ 'Renews on'|trans }}
+                  <strong>{{ order.expires_at|date('Y-m-d') }}</strong>
+                  {{ 'for'|trans }}
+                  <strong>{{ order.total|format_currency(order.currency ?? default_currency) }}</strong>
+                </span>
+                <span class="badge bg-info-lt text-info">
+                  {{ order.expires_at|daysleft }} {{ 'days left'|trans }}
+                </span>
+              </div>
+            {% else %}
+              <span class="small text-secondary">{{ 'Domain registration details'|trans }}</span>
+            {% endif %}
           </div>
 
-          <div class="btn-list">
-            <button class="btn btn-danger btn-sm icon-link" type="button" id="domain-unlock" {% if service.locked == 0 %}style="display:none;"{% endif %}>
-              {{ 'Unlock'|trans }}
-            </button>
-            <button class="btn btn-indigo btn-sm icon-link" type="button" id="domain-lock" {% if service.locked == 1 %}style="display:none;"{% endif %}>
-              {{ 'Lock'|trans }}
-            </button>
-
-            <button class="btn btn-warning btn-sm" type="button" id="domain-disable-pp" {% if service.privacy == 0 %}style="display:none;"{% endif %}>
-              {{ 'Disable privacy'|trans }}
-            </button>
-            <button class="btn btn-secondary btn-sm" type="button" id="domain-enable-pp" {% if service.privacy == 1 %}style="display:none;"{% endif %}>
-              {{ 'Enable privacy'|trans }}
-            </button>
-          </div>
+          {% if order.period and order.status != 'failed_renew' %}
+            <div class="ms-auto">
+              <a class="btn btn-success btn-sm"
+                 {{ fb_api_link({
+                   href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}),
+                   modal: {
+                     type: 'confirm',
+                     title: 'Are you sure?'|trans,
+                     content: 'This will generate new invoice. Are you sure you want to continue?'|trans
+                   },
+                   callback: 'onRenewalInvoiceCreated'
+                 }) }}>
+                {{ 'Renew Now'|trans }}
+              </a>
+            </div>
+          {% endif %}
         </div>
       </div>
-
       <div class="card-body">
-
         <div class="datagrid mb-4">
           <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Name'|trans }}</div>
-            <div class="datagrid-content">
-              <a target="_blank" href="http://{{ service.domain }}">{{ service.domain }}</a>
-            </div>
+            <div class="datagrid-title">{{ 'Order Created'|trans }}</div>
+            <div class="datagrid-content">{{ order.created_at|date('Y-m-d H:i:s') }}</div>
           </div>
 
           <div class="datagrid-item">
@@ -57,65 +73,37 @@
             <div class="datagrid-title">{{ 'Expires on'|trans }}</div>
             <div class="datagrid-content">{{ service.expires_at|date('Y-m-d H:i:s') }}</div>
           </div>
-
-          <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Registrar sync'|trans }}</div>
-            <div class="datagrid-content">
-              <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="text-muted small" id="synced-at-value">
-                    {% if service.synced_at %}
-                        {{ 'Last synced with registrar on %date%'|trans({'%date%': service.synced_at|format_date(pattern="MMM dd, yyyy HH:mm")}) }}
-                    {% else %}
-                        {{ 'Never synced with registrar'|trans }}
-                    {% endif %}
-                </span>
-
-                <button class="btn btn-sm btn-outline-secondary" type="button" id="domain-sync">{{ 'Sync Now'|trans }}</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Protection'|trans }}
-            <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ 'Domain locking is a security feature which prevents your domain name from being transferred without first unlocking it. When this is enabled, a domain cannot be transferred even with the transfer code.'|trans }}" style="cursor: help;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 17l0 .01" /><path d="M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4" /></svg>
-            </span></div>
-            <div class="datagrid-content"><span id="domain-lock-badge" class="badge {% if service.locked == 1 %}bg-green text-green-fg{% else %}bg-yellow text-yellow-fg{% endif %}">{% if service.locked == 1 %}{{ 'Locked'|trans }}{% else %}{{ 'Unlocked'|trans }}{% endif %}</span></div>
-          </div>
-          
-          <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Privacy protection'|trans }}
-            <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ 'If you would like to hide domain contact information which is shown on WHOIS you can enable privacy protection. Once domain privacy protection is enabled no one will know who registered this service. And once you decide to disable privacy protection, information that is listed above on "Update Domain Contact Details" section will be seen on domain WHOIS again.'|trans }}" style="cursor: help;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 17l0 .01" /><path d="M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4" /></svg>
-            </span></div>
-            <div class="datagrid-content"><span id="domain-privacy-badge" class="badge {% if service.privacy == 1 %}bg-green text-green-fg{% else %}bg-secondary text-secondary-fg{% endif %}">{% if service.privacy == 1 %}{{ 'Enabled'|trans }}{% else %}{{ 'Disabled'|trans }}{% endif %}</span></div>
-          </div>
-          
-          <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Transfer code'|trans }}
-            <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ 'Most domain names (except a few top-level domains like .EU and .UK) have a Domain Secret Key/Authorization Code (EPP Code) associated with them. This code is typically required when transferring the domain to a new registrar.'|trans }}" style="cursor: help;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 17l0 .01" /><path d="M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4" /></svg>
-            </span></div>
-            <div class="datagrid-content d-flex align-items-center gap-2">
-
-              <span id="epp-code-value" class="font-monospace text-muted">
-                ••••••••••••
-              </span>
-
-              <button
-                id="epp-code-reveal"
-                type="button"
-                class="btn btn-sm btn-outline-secondary">
-                {{ 'Copy'|trans }}
-              </button>
-
-            </div>
-          </div>
-
         </div>
 
-        <div class="row row-cards">
+        <div class="row row-cards mb-4">
             <div class="col-12 col-lg-6">
+              <div class="btn-list mb-3 d-none" id="domain-settings-switcher">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  data-domain-panel="nameservers">
+                  {{ 'Nameservers'|trans }}
+                </button>
+
+                {% if domainx_enabled %}
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm d-none"
+                    id="domain-panel-glue-button"
+                    data-domain-panel="glue-hosts">
+                    {{ 'Hosts'|trans }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm d-none"
+                    id="domain-panel-dnssec-button"
+                    data-domain-panel="dnssec">
+                    {{ 'DNSSEC'|trans }}
+                  </button>
+                {% endif %}
+              </div>
+
               <div class="card mb-4" id="nameservers">
                 <div class="card-header">
                     <div class="d-flex flex-column">
@@ -164,7 +152,7 @@
               <div class="card mb-4 d-none" id="glue-hosts" data-created-text="{{ 'Glue hostname created successfully'|trans }}" data-updated-text="{{ 'Glue hostname updated successfully'|trans }}" data-deleted-text="{{ 'Glue hostname deleted successfully'|trans }}" data-confirm-text="{{ 'Delete this glue hostname? It must first be removed from any domains using it.'|trans }}" data-address-required="{{ 'Enter an IP address to add or remove.'|trans }}" data-current-text="{{ 'Use as current'|trans }}" data-no-addresses="{{ 'No IP addresses were returned for this hostname.'|trans }}">
                 <div class="card-header">
                   <div class="d-flex flex-column">
-                    <h3 class="card-title mb-1">{{ 'Glue Hostnames'|trans }}</h3>
+                    <h3 class="card-title mb-1">{{ 'Hosts'|trans }}</h3>
                     <div class="text-muted small">
                       {{ 'Create and manage nameserver hostnames within this domain. Update nameserver assignments separately above.'|trans }}
                     </div>
@@ -172,9 +160,9 @@
                 </div>
                 <div class="card-body">
                   <div class="btn-group mb-4" role="group" aria-label="{{ 'Glue hostname action'|trans }}">
-                    <button class="btn btn-primary" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
-                    <button class="btn btn-outline-primary" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
-                    <button class="btn btn-outline-primary" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
+                    <button class="btn btn-primary btn-sm" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
                   </div>
 
                   <form id="glue-form">
@@ -323,9 +311,9 @@
               <div class="card" id="whois">
                 <div class="card-header">
                     <div class="d-flex flex-column">
-                      <h3 class="card-title mb-1">{{ 'WHOIS Contact Details'|trans }}</h3>
+                      <h3 class="card-title mb-1">{{ 'Registrant Details'|trans }}</h3>
                       <div class="text-muted small">
-                        {{ 'Domain contact details will be displayed once someone will check WHOIS output (which is public) of your service. This will update Technical, Billing and Admin contacts for this service. You can enable domain privacy protection if you want to hide your public WHOIS information.'|trans }}
+                        {{ 'Domain contact details may be displayed once someone will check RDAP output (which is public) of your service.'|trans }}
                       </div>
                     </div>
                 </div>
@@ -349,43 +337,27 @@
                           <input class="form-control" type="text" name="contact[company]" id="whois_company" value="{{ request.company|default(service.contact.company) }}">
                         </div>
 
-                        <div class="col-12 col-md-6">
-                          <label for="whois_email" class="form-label">{{ 'Email'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[email]" id="whois_email" value="{{ request.email|default(service.contact.email) }}" autocapitalize="off" required>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                          <label for="whois_phone" class="form-label">{{ 'Phone number'|trans }}</label>
-                          <input type="hidden" name="contact[phone_cc]" id="whois_phone_cc" value="{{ request.phone_cc|default(service.contact.phone_cc) }}">
-                          <input class="form-control js-phone-input" type="tel" name="contact[phone]" id="whois_phone" value="{{ request.phone|default(service.contact.phone) }}" autocomplete="tel" data-initial-country="{{ request.country|default(service.contact.country)|lower }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                          <label for="whois_address1" class="form-label">{{ 'Address Line 1'|trans }}</label>
+                        <div class="col-md-12">
+                          <label for="whois_address1" class="form-label">{{ 'Address'|trans }}</label>
                           <input class="form-control" type="text" name="contact[address1]" id="whois_address1" value="{{ request.address1|default(service.contact.address1) }}" required>
                         </div>
 
-                        <div class="col-12 col-md-6">
-                          <label for="whois_address2" class="form-label">{{ 'Address Line 2'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[address2]" id="whois_address2" value="{{ request.address2|default(service.contact.address2) }}">
-                        </div>
-
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                           <label for="whois_city" class="form-label">{{ 'City'|trans }}</label>
                           <input class="form-control" type="text" name="contact[city]" id="whois_city" value="{{ request.city|default(service.contact.city) }}" required>
                         </div>
 
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                           <label for="whois_state" class="form-label">{{ 'State'|trans }}</label>
                           <input class="form-control" type="text" name="contact[state]" id="whois_state" value="{{ request.state|default(service.contact.state) }}" required>
                         </div>
 
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                           <label for="whois_postcode" class="form-label">{{ 'Zip'|trans }}</label>
                           <input class="form-control" type="text" name="contact[postcode]" id="whois_postcode" value="{{ request.postcode|default(service.contact.postcode) }}" required>
                         </div>
 
-                        <div class="col-12 col-md-6">
+                        <div class="col-md-12">
                           <label for="whois_country" class="form-label required">{{ 'Country'|trans }}</label>
                           <select class="form-select" name="contact[country]" id="whois_country" required>
                             <option value="">{{ '-- Select country --'|trans }}</option>    
@@ -396,6 +368,17 @@
                               </option>
                             {% endfor %}
                           </select>
+                        </div>
+
+                        <div class="col-md-6">
+                          <label for="whois_email" class="form-label">{{ 'Email'|trans }}</label>
+                          <input class="form-control" type="text" name="contact[email]" id="whois_email" value="{{ request.email|default(service.contact.email) }}" autocapitalize="off" required>
+                        </div>
+
+                        <div class="col-md-6">
+                          <label for="whois_phone" class="form-label">{{ 'Phone number'|trans }}</label>
+                          <input type="hidden" name="contact[phone_cc]" id="whois_phone_cc" value="{{ request.phone_cc|default(service.contact.phone_cc) }}">
+                          <input class="form-control js-phone-input" type="tel" name="contact[phone]" id="whois_phone" value="{{ request.phone|default(service.contact.phone) }}" autocomplete="tel" data-initial-country="{{ request.country|default(service.contact.country)|lower }}" required>
                         </div>
                     </div>
 
@@ -408,12 +391,193 @@
           </div>
         </div>
 
+        <div class="row row-cards">
+          {# Transfer Lock #}
+          <div class="col-12 col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+
+              <div class="row align-items-start">
+                <div class="col-auto">
+                     <span class="avatar bg-secondary-lt text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg>
+                     </span>
+                </div>
+
+                  <div class="col">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                      <h3 class="card-title mb-0">
+                        {{ 'Transfer Lock'|trans }}
+                      </h3>
+
+                      <span
+                        id="domain-lock-badge"
+                        class="badge {% if service.locked == 1 %}bg-green-lt text-green{% else %}bg-yellow-lt text-yellow{% endif %}">
+                        {% if service.locked == 1 %}
+                          {{ 'Locked'|trans }}
+                        {% else %}
+                          {{ 'Unlocked'|trans }}
+                        {% endif %}
+                      </span>
+                    </div>
+
+                    <div class="text-secondary mt-3">
+                      {{ 'Prevent unauthorized domain transfers by locking the domain at the registrar.'|trans }}
+                    </div>
+
+                    <div class="mt-4">
+                      <button
+                        class="btn btn-outline-danger"
+                        type="button"
+                        id="domain-unlock"
+                        {% if service.locked == 0 %}style="display:none;"{% endif %}>
+                        {{ 'Unlock domain'|trans }}
+                      </button>
+
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        id="domain-lock"
+                        {% if service.locked == 1 %}style="display:none;"{% endif %}>
+                        {{ 'Lock domain'|trans }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {# Privacy Protection #}
+          <div class="col-12 col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+
+              <div class="row align-items-start">
+                <div class="col-auto">
+                     <span class="avatar bg-secondary-lt text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
+                     </span>
+                </div>
+
+                  <div class="col">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                      <h3 class="card-title mb-0">
+                        {{ 'Privacy Protection'|trans }}
+                      </h3>
+
+                      <span
+                        id="domain-privacy-badge"
+                        class="badge {% if service.privacy == 1 %}bg-green-lt text-green{% else %}bg-secondary-lt text-secondary{% endif %}">
+                        {% if service.privacy == 1 %}
+                          {{ 'Enabled'|trans }}
+                        {% else %}
+                          {{ 'Disabled'|trans }}
+                        {% endif %}
+                      </span>
+                    </div>
+
+                    <div class="text-secondary mt-3">
+                      {{ 'Hide eligible contact information from public domain lookup services.'|trans }}
+                    </div>
+
+                    <div class="mt-4">
+                      <button
+                        class="btn btn-outline-danger"
+                        type="button"
+                        id="domain-disable-pp"
+                        {% if service.privacy == 0 %}style="display:none;"{% endif %}>
+                        {{ 'Disable privacy'|trans }}
+                      </button>
+
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        id="domain-enable-pp"
+                        {% if service.privacy == 1 %}style="display:none;"{% endif %}>
+                        {{ 'Enable privacy'|trans }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+              <div class="row align-items-start">
+                <div class="col-auto">
+                     <span class="avatar bg-secondary-lt text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1 -4.069 0l-.301 -.301l-6.558 6.558a2 2 0 0 1 -1.239 .578l-.175 .008h-1.172a1 1 0 0 1 -.993 -.883l-.007 -.117v-1.172a2 2 0 0 1 .467 -1.284l.119 -.13l.414 -.414h2v-2h2v-2l2.144 -2.144l-.301 -.301a2.877 2.877 0 0 1 0 -4.069l2.643 -2.643a2.877 2.877 0 0 1 4.069 0" /><path d="M15 9h.01" /></svg>
+                     </span>
+                </div>
+
+                  <div class="col">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                      <h3 class="card-title mb-0">{{ 'Transfer code'|trans }}</h3>
+
+                      <span class="badge bg-green-lt text-green">
+                        {{ 'Available'|trans }}
+                      </span>
+                    </div>
+
+                    <div class="text-secondary mt-3">
+                      {{ 'Use the authorization code to transfer your domain. Keep it private.'|trans }}
+                    </div>
+
+                    <div class="mt-4 d-flex align-items-center gap-2">
+                      <div
+                        id="epp-code-value"
+                        class="form-control font-monospace text-muted d-flex align-items-center"
+                        style="min-height: 2.5rem;">
+                        ••••••••••••
+                      </div>
+
+                      <button
+                        id="epp-code-reveal"
+                        type="button"
+                        class="btn btn-outline-secondary text-nowrap">
+                        {{ 'Reveal'|trans }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+      <div class="card-footer">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+          <div>
+            <div class="fw-medium">{{ 'Registrar sync'|trans }}</div>
+            <div class="text-secondary small" id="synced-at-value">
+              {% if service.synced_at %}
+                {{ 'Last synced with registrar on %date%'|trans({'%date%': service.synced_at|format_date(pattern="MMM dd, yyyy HH:mm")}) }}
+              {% else %}
+                {{ 'Never synced with registrar'|trans }}
+              {% endif %}
+            </div>
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" type="button" id="domain-sync">{{ 'Sync Now'|trans }}</button>
+        </div>
       </div>
     </div>
 
 {% block js %}
 <script src="{{ 'libs/intl-tel-input/dist/js/intlTelInputWithUtils.min.js'|asset_url }}"></script>
 <script>
+window.onRenewalInvoiceCreated = (hash) => {
+    window.location = "{{ 'invoice'|url }}/" + hash;
+};
+
 const DOMAIN_LOCKED_TEXT    = "{{ 'Locked'|trans }}";
 const DOMAIN_UNLOCKED_TEXT  = "{{ 'Unlocked'|trans }}";
 const PRIVACY_ENABLED_TEXT  = "{{ 'Enabled'|trans }}";
@@ -452,11 +616,11 @@ function scheduleEppHide() {
 function setLockBadge(isLocked) {
     const b = document.getElementById('domain-lock-badge');
 
-    b.classList.toggle('bg-green', isLocked);
-    b.classList.toggle('text-green-fg', isLocked);
+    b.classList.toggle('bg-green-lt', isLocked);
+    b.classList.toggle('text-green', isLocked);
 
-    b.classList.toggle('bg-yellow', !isLocked);
-    b.classList.toggle('text-yellow-fg', !isLocked);
+    b.classList.toggle('bg-yellow-lt', !isLocked);
+    b.classList.toggle('text-yellow', !isLocked);
 
     b.textContent = isLocked ? DOMAIN_LOCKED_TEXT : DOMAIN_UNLOCKED_TEXT;
 }
@@ -464,11 +628,11 @@ function setLockBadge(isLocked) {
 function setPrivacyBadge(isEnabled) {
     const b = document.getElementById('domain-privacy-badge');
 
-    b.classList.toggle('bg-green', isEnabled);
-    b.classList.toggle('text-green-fg', isEnabled);
+    b.classList.toggle('bg-green-lt', isEnabled);
+    b.classList.toggle('text-green', isEnabled);
 
-    b.classList.toggle('bg-secondary', !isEnabled);
-    b.classList.toggle('text-secondary-fg', !isEnabled);
+    b.classList.toggle('bg-secondary-lt', !isEnabled);
+    b.classList.toggle('text-secondary', !isEnabled);
 
     b.textContent = isEnabled ? PRIVACY_ENABLED_TEXT : PRIVACY_DISABLED_TEXT;
 }
@@ -498,7 +662,6 @@ document.getElementById('domain-lock').addEventListener('click', function (event
         'servicedomain/lock',
         { order_id: {{ order.id }} },
         () => {
-            FOSSBilling.message('Domain locked');
             toggleDisplay('domain-lock', 'domain-unlock');
             setLockBadge(true);
         },
@@ -513,7 +676,6 @@ document.getElementById('domain-unlock').addEventListener('click', function (eve
         'servicedomain/unlock',
         { order_id: {{ order.id }} },
         () => {
-            FOSSBilling.message('Domain unlocked');
             toggleDisplay('domain-lock', 'domain-unlock');
             setLockBadge(false);
         },
@@ -528,7 +690,6 @@ document.getElementById('domain-enable-pp').addEventListener('click', function (
         'servicedomain/enable_privacy_protection',
         { order_id: {{ order.id }} },
         () => {
-            FOSSBilling.message('Privacy Protection enabled');
             toggleDisplay('domain-enable-pp', 'domain-disable-pp');
             setPrivacyBadge(true);
         },
@@ -543,7 +704,6 @@ document.getElementById('domain-disable-pp').addEventListener('click', function 
         'servicedomain/disable_privacy_protection',
         { order_id: {{ order.id }} },
         () => {
-            FOSSBilling.message('Privacy Protection disabled');
             toggleDisplay('domain-enable-pp', 'domain-disable-pp');
             setPrivacyBadge(false);
         },
@@ -561,7 +721,6 @@ document.getElementById('domain-sync').addEventListener('click', function (event
         'servicedomain/sync',
         { order_id: {{ order.id }} },
         () => {
-            FOSSBilling.message('{{ 'Domain synchronized with registrar'|trans }}');
             window.location.reload();
         },
         (err) => {
@@ -572,14 +731,42 @@ document.getElementById('domain-sync').addEventListener('click', function (event
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    const domainPanels = ['nameservers', 'glue-hosts', 'dnssec'];
+    const domainPanelButtons = Array.from(
+        document.querySelectorAll('[data-domain-panel]')
+    );
+
+    function selectDomainPanel(panelId) {
+        domainPanels.forEach((id) => {
+            const panel = document.getElementById(id);
+            if (panel) {
+                panel.classList.toggle('d-none', id !== panelId);
+            }
+        });
+
+        domainPanelButtons.forEach((button) => {
+            const selected = button.dataset.domainPanel === panelId;
+            button.classList.toggle('btn-secondary', selected);
+            button.classList.toggle('btn-outline-secondary', !selected);
+        });
+    }
+
+    domainPanelButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            selectDomainPanel(button.dataset.domainPanel);
+        });
+    });
+
     {% if domainx_enabled %}
     const dnssecCard = document.getElementById('dnssec');
+    const dnssecButton = document.getElementById('domain-panel-dnssec-button');
     const dnssecTable = document.getElementById('dnssec-current');
     const dnssecBody = document.getElementById('dnssec-records');
     const dnssecEmpty = document.getElementById('dnssec-empty');
     const dnssecLimit = document.getElementById('dnssec-limit');
     const dnssecForm = document.getElementById('dnssec-add-form');
     const glueCard = document.getElementById('glue-hosts');
+    const glueButton = document.getElementById('domain-panel-glue-button');
     const glueForm = document.getElementById('glue-form');
     const glueHostname = document.getElementById('glue-hostname');
     const glueIp = document.getElementById('glue-ip-address');
@@ -795,19 +982,38 @@ document.addEventListener("DOMContentLoaded", function () {
             (result) => {
                 const features = result && result.features || {};
                 const feature = features.dnssec;
-                glueCard.classList.toggle('d-none', !features.glue || !features.glue.available);
+                const glueAvailable = !!(features.glue && features.glue.available);
+                const dnssecAvailable = !!(feature && feature.available);
 
-                if (!feature || !feature.available) {
+                glueButton.classList.toggle('d-none', !glueAvailable);
+                dnssecButton.classList.toggle('d-none', !dnssecAvailable);
+
+                document.getElementById('domain-settings-switcher')
+                    .classList.toggle('d-none', !glueAvailable && !dnssecAvailable);
+
+                if (!glueAvailable) {
+                    glueCard.classList.add('d-none');
+                    if (glueButton.classList.contains('btn-secondary')) {
+                        selectDomainPanel('nameservers');
+                    }
+                }
+
+                if (!dnssecAvailable) {
                     dnssecCard.classList.add('d-none');
+                    if (dnssecButton.classList.contains('btn-secondary')) {
+                        selectDomainPanel('nameservers');
+                    }
                     return;
                 }
 
                 renderDnssecRecords(feature);
-                dnssecCard.classList.remove('d-none');
             },
             () => {
-                dnssecCard.classList.add('d-none');
-                glueCard.classList.add('d-none');
+                dnssecButton.classList.add('d-none');
+                glueButton.classList.add('d-none');
+                document.getElementById('domain-settings-switcher')
+                    .classList.add('d-none');
+                selectDomainPanel('nameservers');
             }
         );
     }
