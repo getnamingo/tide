@@ -187,6 +187,7 @@
 {% endif %}
 {% if request.checkout matches '/^\\d+$/' %}
 {% set cart = guest.cart_get%}
+{% set registration_domains = cart.items|filter(i => i.type == 'domain' and (i.action ?? '') == 'register') %}
 {% if client %}
 <div class="row row-deck row-cards mb-3">
    <div class="col-md-12">
@@ -231,7 +232,7 @@
                               {% endif %}
                            </td>
                            <td>
-                               <a class="btn btn-warning btn-icon" title="{{ 'Remove item'|trans }}"
+                               <a class="btn btn-outline-danger btn-icon" title="{{ 'Remove item'|trans }}"
                                   {{ fb_api_link({href: 'cart/remove_item'|api_url(query: {id: item.id}, role: 'guest'), modal: {type: 'confirm', title: 'Are you sure?'|trans, content: 'Are you sure you want to remove this item from cart?'|trans}, reload: true}) }}>
                                  <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -366,147 +367,264 @@
                      </tr>
                   </table>
                </div>
-               <div class="card mt-3">
-                 <div class="card-body">
-                   <div class="form-check">
-                     <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required>
-                     <label class="form-check-label" for="agreeTerms">
-                       {{ 'Before completing your order, you must agree to the following documents:'|trans }}
-                     </label>
-                   </div>
-                   {% set has_ge = cart.items|filter(i => i.type == 'domain' and (i.register_tld == '.ge' or i.transfer_tld == '.ge'))|length > 0 %}
-
-                   <div class="mt-2 small">
-                     <div class="mt-3">
-                       <div class="card card-sm mb-2 border">
-                         <div class="card-body d-flex align-items-center justify-content-between">
-                           <div class="d-flex align-items-center">
-                             <span class="avatar avatar-sm bg-blue-lt me-3">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
-                             </span>
-
-                             <div>
-                               <div class="fw-semibold">Terms and Conditions</div>
-                             </div>
-                           </div>
-
-                           <a href="tos"
-                              target="_blank" rel="noopener"
-                              class="btn btn-sm btn-outline-primary">
-                             View
-                           </a>
-                         </div>
-                       </div>
-
-                       <div class="card card-sm mb-2 border">
-                         <div class="card-body d-flex align-items-center justify-content-between">
-                           <div class="d-flex align-items-center">
-                             <span class="avatar avatar-sm bg-green-lt me-3">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /><path d="M11 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12l0 2.5" /></svg>
-                             </span>
-
-                             <div>
-                               <div class="fw-semibold">Privacy Policy</div>
-                             </div>
-                           </div>
-
-                           <a href="privacy-policy"
-                              target="_blank" rel="noopener"
-                              class="btn btn-sm btn-outline-primary">
-                             View
-                           </a>
-                         </div>
-                       </div>
-
-                       {% if has_ge %}
-                       <div class="card card-sm mb-2 border">
-                         <div class="card-body d-flex align-items-center justify-content-between">
-                           <div class="d-flex align-items-center">
-                             <span class="avatar avatar-sm bg-blue-lt me-3">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
-                             </span>
-
-                             <div>
-                               <div class="fw-semibold">.ge Domain Registration and Administration Rules</div>
-                             </div>
-                           </div>
-
-                           <a href="https://nic.ge/_cdn/f/24/38/SLIPhFp7p0acMj1jVbr5Hw/2025.08.07.Domain_Regulation_Amendments_ENG_%20V.5.0_FINAL.pdf"
-                              target="_blank" rel="noopener"
-                              class="btn btn-sm btn-outline-primary">
-                             View
-                           </a>
-                         </div>
-                       </div>
-                       {% endif %}
-
-                       {% if has_ge %}
-                       <div class="card card-sm mb-2 border">
-                         <div class="card-body d-flex align-items-center justify-content-between">
-                           <div class="d-flex align-items-center">
-                             <span class="avatar avatar-sm bg-green-lt me-3">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
-                             </span>
-
-                             <div>
-                               <div class="fw-semibold">.ge Privacy Policy</div>
-                             </div>
-                           </div>
-
-                           <a href="https://nic.ge/_cdn/f/11/70/gZLIa2Apr0WNkPiC9LhCQg/Privacy_%20Policy_%20ENG.pdf"
-                              target="_blank" rel="noopener"
-                              class="btn btn-sm btn-outline-primary">
-                             View
-                           </a>
-                         </div>
-                       </div>
-                       {% endif %}
-
-                       {% if settings.registrant_information is defined and settings.registrant_information %}
-                       <div class="card card-sm border">
-                         <div class="card-body d-flex align-items-center justify-content-between">
-                           <div class="d-flex align-items-center">
-                             <span class="avatar avatar-sm bg-orange-lt me-3">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
-                             </span>
-
-                             <div>
-                               <div class="fw-semibold">Information for Registrants</div>
-                             </div>
-                           </div>
-
-                           <a href="{{ settings.registrant_information }}"
-                              target="_blank" rel="noopener"
-                              class="btn btn-sm btn-outline-primary">
-                             View
-                           </a>
-                         </div>
-                       </div>
-                       {% endif %}
-
-                     </div>
-
-                     <div id="agreeTermsHelp" class="text-danger d-none">
-                       {{ 'You must agree before you can proceed.'|trans }}
-                     </div>
-                   </div>
-                 </div>
-               </div>
-               <script>
-               document.addEventListener('DOMContentLoaded', function () {
-                   const checkbox = document.getElementById('agreeTerms');
-                   const button   = document.getElementById('checkoutBtn');
-
-                   if (!checkbox || !button) return;
-
-                   button.disabled = !checkbox.checked;
-
-                   checkbox.addEventListener('change', function () {
-                       button.disabled = !this.checked;
-                   });
-               });
-               </script>
                <form method="post" action="{{ 'cart/checkout'|api_url }}" {{ fb_api_form({callback: 'onOrderCheckout'}) }}>
+                  {% if registration_domains|length > 0 %}
+                  {% set registration_domain = registration_domains|first %}
+                  {% set has_custom_ns =
+                      (registration_domain.ns1 ?? '')|trim or
+                      (registration_domain.ns2 ?? '')|trim or
+                      (registration_domain.ns3 ?? '')|trim or
+                      (registration_domain.ns4 ?? '')|trim
+                  %}
+                  <div class="row g-3 mt-1">
+                     <div class="col-12 col-lg-6">
+                        <div class="card h-100">
+                           <div class="card-body">
+                              <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                 <div>
+                                    <h3 class="card-title mb-1">{{ 'Registrant contact'|trans }}</h3>
+                                    <div class="text-muted small">{{ 'These details will be used for your new domain registration.'|trans }}</div>
+                                 </div>
+                                 {% if profile is defined and profile and (profile.id ?? 0) %}
+                                 <a href="{{ 'client/profile'|url }}" target="_blank" class="btn btn-sm btn-outline-primary text-nowrap">
+                                    {{ 'Update profile'|trans }}
+                                 </a>
+                                 {% endif %}
+                              </div>
+
+                              {% if profile is defined and profile and (profile.id ?? 0) %}
+                              <div class="d-flex flex-column gap-2">
+                                 <div class="fw-semibold">
+                                    {{ ((profile.first_name ?? '') ~ ' ' ~ (profile.last_name ?? ''))|trim ?: '---' }}
+                                    {% set doc = (profile.document_nr ?? '')|trim %}
+                                    {% if doc %}
+                                    <span class="text-muted small fw-normal">({{ 'ID'|trans }}: {{ doc }})</span>
+                                    {% endif %}
+                                 </div>
+
+                                 {% set company = (profile.company ?? '')|trim %}
+                                 {% set companyNr = (profile.company_number ?? '')|trim %}
+                                 {% if company or companyNr %}
+                                 <div>
+                                    {{ company ?: '---' }}
+                                    {% if companyNr %}<span class="text-muted small">({{ 'No.'|trans }} {{ companyNr }})</span>{% endif %}
+                                 </div>
+                                 {% endif %}
+
+                                 <div class="row g-2">
+                                    <div class="col-sm-6">
+                                       <div class="text-muted small">{{ 'Email'|trans }}</div>
+                                       <div>{{ (profile.email ?? '')|trim ?: '---' }}</div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                       <div class="text-muted small">{{ 'Phone'|trans }}</div>
+                                       {% set phone = (profile.phone ?? '')|trim %}
+                                       {% set cc = (profile.phone_cc ?? '')|trim %}
+                                       <div>{{ phone ? ('+' ~ (cc ?: '') ~ ' ' ~ phone)|trim : '---' }}</div>
+                                    </div>
+                                 </div>
+
+                                 <div>
+                                    <div class="text-muted small">{{ 'Address'|trans }}</div>
+                                    {% set a1 = (profile.address_1 ?? '')|trim %}
+                                    {% set a2 = (profile.address_2 ?? '')|trim %}
+                                    {% set city = (profile.city ?? '')|trim %}
+                                    {% set state = (profile.state ?? '')|trim %}
+                                    {% set pc = (profile.postcode ?? '')|trim %}
+                                    {% set country = (profile.country ?? '')|trim %}
+                                    <div class="small">
+                                       <div>{{ a1 ?: '---' }}</div>
+                                       {% if a2 %}<div>{{ a2 }}</div>{% endif %}
+                                       <div>{{ [pc, city]|filter(v => v is not empty)|join(' ') ?: '---' }}{% if state %}, {{ state }}{% endif %}</div>
+                                       {% if country %}<div>{{ country }}</div>{% endif %}
+                                    </div>
+                                 </div>
+                              </div>
+                              {% else %}
+                              <div class="text-muted">{{ 'Your current client profile will be used for the registration.'|trans }}</div>
+                              {% endif %}
+                           </div>
+                        </div>
+                     </div>
+
+                     <div class="col-12 col-lg-6">
+                        <div class="card h-100">
+                           <div class="card-body">
+                              <h3 class="card-title mb-1">{{ 'Nameservers'|trans }}</h3>
+                              <div class="text-muted small mb-3">{{ 'This choice applies to all new domain registrations in this cart.'|trans }}</div>
+
+                              <select class="form-select" id="checkout-ns-mode" name="domain_ns_mode">
+                                 <option value="default"{% if not has_custom_ns %} selected{% endif %}>{{ 'Default nameservers'|trans }}</option>
+                                 <option value="custom"{% if has_custom_ns %} selected{% endif %}>{{ 'Custom nameservers'|trans }}</option>
+                              </select>
+
+                              <div id="checkout-ns-default-hint" class="text-muted mt-3">
+                                 {{ 'We will use the default nameservers. You can change them later from your client area.'|trans }}
+                              </div>
+
+                              <div id="checkout-ns-custom-fields" class="mt-3 d-none">
+                                 <div class="row g-2">
+                                    <div class="col-12 col-md-6">
+                                       <input type="text" class="form-control" name="domain_ns1" value="{{ registration_domain.ns1 ?? '' }}" placeholder="{{ 'Nameserver 1'|trans }}" autocapitalize="off">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                       <input type="text" class="form-control" name="domain_ns2" value="{{ registration_domain.ns2 ?? '' }}" placeholder="{{ 'Nameserver 2'|trans }}" autocapitalize="off">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                       <input type="text" class="form-control" name="domain_ns3" value="{{ registration_domain.ns3 ?? '' }}" placeholder="{{ 'Nameserver 3'|trans }}" autocapitalize="off">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                       <input type="text" class="form-control" name="domain_ns4" value="{{ registration_domain.ns4 ?? '' }}" placeholder="{{ 'Nameserver 4'|trans }}" autocapitalize="off">
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  {% endif %}
+
+                  <div class="card mt-3">
+                    <div class="card-body">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required>
+                        <label class="form-check-label" for="agreeTerms">
+                          {{ 'Before completing your order, you must agree to the following documents:'|trans }}
+                        </label>
+                      </div>
+                      {% set has_ge = cart.items|filter(i => i.type == 'domain' and (i.register_tld == '.ge' or i.transfer_tld == '.ge'))|length > 0 %}
+
+                      <div class="mt-2 small">
+                        <div class="mt-3">
+                          <div class="card card-sm mb-2 border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                              <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm bg-blue-lt me-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
+                                </span>
+
+                                <div>
+                                  <div class="fw-semibold">Terms and Conditions</div>
+                                </div>
+                              </div>
+
+                              <a href="tos"
+                                 target="_blank" rel="noopener"
+                                 class="btn btn-sm btn-outline-primary">
+                                {{ 'View'|trans }}
+                              </a>
+                            </div>
+                          </div>
+
+                          <div class="card card-sm mb-2 border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                              <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm bg-green-lt me-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /><path d="M11 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12l0 2.5" /></svg>
+                                </span>
+
+                                <div>
+                                  <div class="fw-semibold">Privacy Policy</div>
+                                </div>
+                              </div>
+
+                              <a href="privacy-policy"
+                                 target="_blank" rel="noopener"
+                                 class="btn btn-sm btn-outline-primary">
+                                {{ 'View'|trans }}
+                              </a>
+                            </div>
+                          </div>
+
+                          {% if has_ge %}
+                          <div class="card card-sm mb-2 border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                              <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm bg-blue-lt me-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+                                </span>
+
+                                <div>
+                                  <div class="fw-semibold">.ge Domain Registration and Administration Rules</div>
+                                </div>
+                              </div>
+
+                              <a href="https://nic.ge/_cdn/f/24/38/SLIPhFp7p0acMj1jVbr5Hw/2025.08.07.Domain_Regulation_Amendments_ENG_%20V.5.0_FINAL.pdf"
+                                 target="_blank" rel="noopener"
+                                 class="btn btn-sm btn-outline-primary">
+                                {{ 'View'|trans }}
+                              </a>
+                            </div>
+                          </div>
+                          {% endif %}
+
+                          {% if has_ge %}
+                          <div class="card card-sm mb-2 border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                              <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm bg-green-lt me-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
+                                </span>
+
+                                <div>
+                                  <div class="fw-semibold">.ge Privacy Policy</div>
+                                </div>
+                              </div>
+
+                              <a href="https://nic.ge/_cdn/f/11/70/gZLIa2Apr0WNkPiC9LhCQg/Privacy_%20Policy_%20ENG.pdf"
+                                 target="_blank" rel="noopener"
+                                 class="btn btn-sm btn-outline-primary">
+                                {{ 'View'|trans }}
+                              </a>
+                            </div>
+                          </div>
+                          {% endif %}
+
+                          {% if settings.registrant_information is defined and settings.registrant_information %}
+                          <div class="card card-sm border">
+                            <div class="card-body d-flex align-items-center justify-content-between">
+                              <div class="d-flex align-items-center">
+                                <span class="avatar avatar-sm bg-orange-lt me-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                                </span>
+
+                                <div>
+                                  <div class="fw-semibold">Information for Registrants</div>
+                                </div>
+                              </div>
+
+                              <a href="{{ settings.registrant_information }}"
+                                 target="_blank" rel="noopener"
+                                 class="btn btn-sm btn-outline-primary">
+                                {{ 'View'|trans }}
+                              </a>
+                            </div>
+                          </div>
+                          {% endif %}
+
+                        </div>
+
+                        <div id="agreeTermsHelp" class="text-danger d-none">
+                          {{ 'You must agree before you can proceed.'|trans }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <script>
+                  document.addEventListener('DOMContentLoaded', function () {
+                      const checkbox = document.getElementById('agreeTerms');
+                      const button   = document.getElementById('checkoutBtn');
+
+                      if (!checkbox || !button) return;
+
+                      button.disabled = !checkbox.checked;
+
+                      checkbox.addEventListener('change', function () {
+                          button.disabled = !this.checked;
+                      });
+                  });
+                  </script>
+
                   <fieldset class="form-fieldset mt-3">
                      {% set enough_in_balance = client.client_balance_get_total >= cart.total %}
                      {% if cart.total and not enough_in_balance %}
@@ -564,6 +682,28 @@
 {% block js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const nsMode = document.getElementById('checkout-ns-mode');
+        const nsHint = document.getElementById('checkout-ns-default-hint');
+        const nsFields = document.getElementById('checkout-ns-custom-fields');
+
+        if (nsMode && nsHint && nsFields) {
+            const nsInputs = nsFields.querySelectorAll('input[name^="domain_ns"]');
+            const setNsMode = (value) => {
+                const custom = value === 'custom';
+                nsHint.classList.toggle('d-none', custom);
+                nsFields.classList.toggle('d-none', !custom);
+
+                nsInputs.forEach((input, index) => {
+                    input.disabled = !custom;
+                    input.required = custom && index < 2;
+                    if (!custom) input.value = '';
+                });
+            };
+
+            nsMode.addEventListener('change', (e) => setNsMode(e.target.value));
+            setNsMode(nsMode.value);
+        }
+
         document.querySelectorAll('.accordion-body').forEach(accordionBody => {
             accordionBody.addEventListener('shown.bs.collapse', function() {
                 document.getElementById('popup-iframe').height = document.body.clientHeight;

@@ -4,7 +4,19 @@
 {% set cart_currency = guest.cart_get_currency %}
 {% set active_menu = 'order' %}
 
-<div class="card">
+<style>
+@media (max-width: 767.98px) {
+  #domain-result-card.domain-result-unavailable .card-body > .row {
+    min-height: 150px;
+    align-content: center;
+  }
+}
+#config-next {
+    display: none !important;
+}
+</style>
+
+<div class="card card-borderless">
     <div class="card-body" id="register">
     {% if guest.extension_is_on({"mod":"domainsbot"}) %}
         <div class="text-center mt-3">
@@ -15,201 +27,104 @@
         </div>
     {% endif %}
         <div id="domain-search-transfer-form">
-            <div class="row g-2 mb-3 {% if guest.extension_is_on({"mod":"domainsbot"}) %}mt-6{% endif %}">
+            <div class="row g-2 align-items-center {% if guest.extension_is_on({"mod":"domainsbot"}) %}mt-6{% endif %}">
                 <div class="col-12 col-md-8">
                     <input type="text" class="form-control form-control-lg" placeholder="Enter your domain name" aria-label="Domain Name" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" required>
-                    <div id="domain-selected" class="form-control form-control-lg d-none bg-light">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <div class="fw-semibold text-body text-truncate">
-                          <span id="domain-selected-text"></span>
-                        </div>
-                      </div>
-                    </div>
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2 align-items-center flex-nowrap">
                     <button class="btn btn-primary btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="domain-check">{{ 'Search'|trans }}</button>
                     {% if transfer_tlds is not empty %}
                         <button class="btn btn-success btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="transfer-check">{{ 'Transfer'|trans }}</button>
                     {% endif %}
-                    <div id="registration-wrap" class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end onAfterDomainCheck" style="display:none;">
-                      <select class="form-select form-select-lg" name="register_years" id="registration-years" style="display:none;"></select>
-
-                      <span id="registration-price" class="form-control form-control-lg bg-light d-none d-flex align-items-center justify-content-center fw-bold fs-3 text-primary border-primary text-nowrap ms-2" style="width:auto; min-width:120px;"></span>
-                    </div>
-                    <div id="domain-transfer-config-wrap" class="flex-grow-1 mt-2 mt-md-0 ms-md-2" style="display:none; min-width:180px;">
-                        <input type="text" class="form-control form-control-lg" name="transfer_code" id="domain-transfer-config" value="{{ request.transfer_code }}" placeholder="{{ 'Enter transfer code'|trans }}" />
-                        <div class="form-hint" id="transfer-code-hint" style="display:none;">
-                            {{ 'This TLD requires a transfer code (EPP/auth code) to proceed.'|trans }}
-                        </div>
-                    </div>
-                    <span id="transfer-price" class="form-control form-control-lg bg-light d-none d-flex align-items-center justify-content-center fw-bold fs-3 text-success border-success text-nowrap ms-2" style="width:auto; min-width:120px;"></span>
                 </div>
             </div>
-            <p class="text-muted text-center mt-4" id="info-text">Search for your perfect domain name{% if transfer_tlds is not empty %} or transfer an existing one{% endif %}.</p>
+            <p class="text-muted text-center mt-3 mb-0" id="info-text">Search for your perfect domain name{% if transfer_tlds is not empty %} or transfer an existing one{% endif %}.</p>
             <input type="hidden" name="id" value="{{ product.id }}" />
             <input type="hidden" name="register_tld" value="" />
             <input type="hidden" name="register_sld" value="" />
             <input type="hidden" name="transfer_tld" value="" />
             <input type="hidden" name="transfer_sld" value="" />
             <input type="hidden" name="action" value="" />
-
-            <div class="onAfterDomainCheck2" style="display:none;">
-              <div class="row g-3 mt-3 mb-3">
-                <!-- Contacts -->
-                <div class="col-12 col-lg-6">
-                  <div class="card">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h3 class="card-title mb-0">{{ 'Contacts'|trans }}</h3>
-
-                        {% if profile is defined and profile and (profile.id ?? 0) %}
-                        <a href="{{ 'client/profile'|url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                          {{ 'Update profile'|trans }}
-                        </a>{% endif %}
-                      </div>
-
-                    {% if profile is defined and profile and (profile.id ?? 0) %}
-                      <div class="text-muted mb-3">
-                        {{ 'Please make sure your details are correct, otherwise your request might fail.'|trans }}
-                      </div>
-                    {% else %}
-                      <div class="text-muted mb-3">
-                        {{ 'The domain will be registered or transferred using the information from your client profile. Please make sure your details are correct, otherwise your request might fail.'|trans }}
-                      </div>
-                    {% endif %}
-
-                      {% if profile is defined and profile and (profile.id ?? 0) %}
-                        <hr class="my-3">
-
-                        <div class="d-flex flex-column gap-2">
-                          <div class="fw-semibold mb-1">
-                            {{ ((profile.first_name ?? '') ~ ' ' ~ (profile.last_name ?? ''))|trim ?: '---' }}
-
-                            {% set doc = (profile.document_nr ?? '')|trim %}
-                            {% if doc %}
-                              <span class="text-muted small fw-normal">
-                                ({{ 'ID'|trans }}: {{ doc }})
-                              </span>
-                            {% endif %}
-                          </div>
-
-                          <div>
-                            {{ (profile.company ?? '')|trim ?: '---' }}
-
-                            {% set companyNr = (profile.company_number ?? '')|trim %}
-                            {% if companyNr %}
-                              <span class="text-muted small">
-                                ({{ 'No.'|trans }} {{ companyNr }})
-                              </span>
-                            {% endif %}
-                          </div>
-
-                          <div class="d-flex flex-wrap gap-3">
-                            <div>
-                              <div class="text-muted small">{{ 'Email'|trans }}</div>
-                              <div class="text-body">
-                                {{ (profile.email ?? '')|trim ?: '---' }}
-                              </div>
-                            </div>
-
-                            <div>
-                              <div class="text-muted small">{{ 'Phone'|trans }}</div>
-                              <div class="text-body">
-                                {% set phone = (profile.phone ?? '')|trim %}
-                                {% set cc = (profile.phone_cc ?? '')|trim %}
-                                {{ (phone ? ('+' ~ (cc ?: '') ~ ' ' ~ phone)|trim : '---') }}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div>
-                            <div class="text-muted small">{{ 'Address'|trans }}</div>
-                            <div class="small text-body">
-                              {% set a1 = (profile.address_1 ?? '')|trim %}
-                              {% set a2 = (profile.address_2 ?? '')|trim %}
-                              {% set city = (profile.city ?? '')|trim %}
-                              {% set state = (profile.state ?? '')|trim %}
-                              {% set pc = (profile.postcode ?? '')|trim %}
-                              {% set country = (profile.country ?? '')|trim %}
-
-                              <div>{{ a1 ?: '---' }}</div>
-                              {% if a2 %}<div>{{ a2 }}</div>{% endif %}
-                              <div>
-                                {{ [pc, city]|filter(v => v is not empty)|join(' ') ?: '---' }}
-                                {% if state %}, {{ state }}{% endif %}
-                              </div>
-                              {% if country %}<div>{{ country }}</div>{% endif %}
-                            </div>
-                          </div>
-                        </div>
-                      {% endif %}
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Nameservers -->
-                <div class="col-12 col-lg-6">
-                  <div class="card">
-                    <div class="card-body">
-                      <h3 class="card-title mb-3">{{ 'Nameservers'|trans }}</h3>
-
-                      <select class="form-select" id="ns-mode" name="ns_mode">
-                        <option value="default" selected>{{ 'Default nameservers'|trans }}</option>
-                        <option value="custom">{{ 'Custom nameservers'|trans }}</option>
-                      </select>
-
-                      <div id="ns-default-hint" class="text-muted mt-3">
-                        We'll use our default nameservers for this domain. You can change them later from your client area.
-                      </div>
-
-                      <div id="ns-custom-fields" class="mt-3 d-none">
-                        <div class="mb-3">
-                          <input type="text" class="form-control" name="ns1" placeholder="Nameserver 1" autocapitalize="off" disabled>
-                        </div>
-                        <div class="mb-3">
-                          <input type="text" class="form-control" name="ns2" placeholder="Nameserver 2" autocapitalize="off" disabled>
-                        </div>
-                        <div class="mb-3">
-                          <input type="text" class="form-control" name="ns3" placeholder="Nameserver 3" autocapitalize="off" disabled>
-                        </div>
-                        <div class="mb-0">
-                          <input type="text" class="form-control" name="ns4" placeholder="Nameserver 4" autocapitalize="off" disabled>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-footer d-none justify-content-start gap-2" id="register-footer">
-        <div style="display:none;" id="config-next-domain">
-            <button type="submit" class="btn btn-primary px-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M7 7l5 5l-5 5"></path>
-                    <path d="M13 7l5 5l-5 5"></path>
-                </svg>
-                {{ 'Next'|trans }}
-            </button>
-        </div>
-        <div style="display:none;" id="config-next-domain2">
-            <button type="submit" class="btn btn-primary px-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M7 7l5 5l-5 5"></path>
-                    <path d="M13 7l5 5l-5 5"></path>
-                </svg>
-                {{ 'Next'|trans }}
-            </button>
         </div>
     </div>
 </div>
 {% set currency = guest.cart_get_currency %}
 {% set sorted_tlds = pricing|keys|sort((a, b) => a <=> b) %}
-<div id="tld-pricing-card" class="card mt-3">
+
+<div id="domain-result-card" class="card card-sm border-success mt-3 d-none">
+  <div class="card-body py-3">
+    <div class="row align-items-center g-3">
+      <div class="col">
+        <div class="d-flex align-items-center gap-3">
+          <span id="domain-result-icon" class="avatar avatar-md bg-success-lt text-success d-none d-md-inline-flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path id="domain-result-icon-path" d="M5 12l5 5l10 -10" /></svg>
+          </span>
+
+          <div class="min-w-0">
+            <div class="h2 mb-1 text-truncate" id="domain-result-name"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-auto">
+        <span id="domain-result-status"
+              class="badge bg-success-lt text-success px-3 py-2">
+          {{ 'Available'|trans }}
+        </span>
+      </div>
+
+      <div class="w-100 d-md-none"></div>
+
+      <div class="col-auto col-md-auto mx-auto mx-md-0" id="domain-result-period">
+        <select class="form-select"
+                name="register_years"
+                id="registration-years"></select>
+      </div>
+
+      <div class="col-auto col-md-auto mx-auto mx-md-0 d-none"
+           id="domain-result-transfer-code"
+           style="min-width:220px;">
+        <input type="text"
+               class="form-control"
+               name="transfer_code"
+               id="domain-transfer-config"
+               value="{{ request.transfer_code }}"
+               placeholder="{{ 'Transfer code'|trans }}"
+               autocapitalize="off"
+               autocomplete="off"
+               required
+               disabled>
+        <div class="form-hint"
+             id="transfer-code-hint"
+             style="display:none;">
+          {{ 'This TLD requires a transfer code (EPP/auth code) to proceed.'|trans }}
+        </div>
+      </div>
+
+      <div class="w-100 d-md-none"></div>
+
+      <div class="col-auto col-md-auto text-end ms-auto ms-md-0"
+           id="domain-result-price-wrap"
+           style="min-width:150px;">
+        <div id="registration-price"
+             class="h2 mb-0 text-primary text-nowrap"></div>
+        <div id="registration-renewal"
+             class="small text-muted text-nowrap"></div>
+      </div>
+
+      <div class="col-auto col-md-auto me-auto me-md-0" id="domain-result-cart-wrap">
+        <div id="config-next-domain" style="display:none;">
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 17h-11v-14h-2" /><path d="M6 5l14 1l-1 7h-13" /></svg>
+            {{ 'Add to Cart'|trans }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tld-pricing-card" class="card card-borderless mt-3">
     <div class="card-body">
         <div class="row row-cards justify-content-center">
             {% for tld in sorted_tlds %}
@@ -264,27 +179,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
-    const mode = document.getElementById('ns-mode');
-    const hint = document.getElementById('ns-default-hint');
-    const fields = document.getElementById('ns-custom-fields');
-    const inputs = fields.querySelectorAll('input[name^="ns"]');
-
-    const setNsMode = (value) => {
-      const isCustom = value === 'custom';
-
-      hint.classList.toggle('d-none', isCustom);
-      fields.classList.toggle('d-none', !isCustom);
-
-      inputs.forEach((input) => {
-        input.disabled = !isCustom;
-        if (!isCustom) input.value = '';
-      });
-    };
-
-    mode.addEventListener('change', (e) => setNsMode(e.target.value));
-    setNsMode(mode.value);
-
     const domain = sessionStorage.getItem("namingo_domain");
 
     if (!domain) return;
@@ -317,61 +211,89 @@ function hide(el) {
     el.style.display = 'none';
 }
 
-function hideFooter() {
-  const el = document.getElementById('register-footer');
-  if (!el) return;
-
-  el.classList.remove('d-flex');
-  el.classList.add('d-none');
-}
-
-function showFooter() {
-  const el = document.getElementById('register-footer');
-  if (!el) return;
-
-  el.classList.remove('d-none');
-  el.classList.add('d-flex');
-}
-
 function hideTldPricingCard() {
   const card = document.getElementById('tld-pricing-card');
   if (card) card.style.display = 'none';
 }
 
-function showTldPricingCard() {
-  const card = document.getElementById('tld-pricing-card');
-  if (card) card.style.display = '';
-}
+function setDomainResult(domain, available, statusText = null, mode = 'register') {
+  const card = document.getElementById('domain-result-card');
+  const name = document.getElementById('domain-result-name');
+  const status = document.getElementById('domain-result-status');
+  const icon = document.getElementById('domain-result-icon');
+  const iconPath = document.getElementById('domain-result-icon-path');
 
-function lockDomainInput(domain) {
-  const input = document.querySelector('input[name="domain_name"]');
-  const box = document.getElementById('domain-selected');
-  const text = document.getElementById('domain-selected-text');
+  const period = document.getElementById('domain-result-period');
+  const transferCode = document.getElementById('domain-result-transfer-code');
+  const yearsSelect = document.getElementById('registration-years');
+  const transferCodeInput = document.getElementById('domain-transfer-config');
+  const price = document.getElementById('domain-result-price-wrap');
+  const cart = document.getElementById('domain-result-cart-wrap');
+  const isTransfer = mode === 'transfer';
 
-  if (!input || !box || !text) return;
+  if (name) name.textContent = domain;
 
-  input.value = (domain || '').trim();
+  if (card) {
+    card.classList.toggle('border-success', available);
+    card.classList.toggle('border-danger', !available);
+    card.classList.toggle('domain-result-unavailable', !available);
+  }
 
-  input.removeAttribute('required');
+  if (status) {
+    status.classList.toggle('bg-success-lt', available);
+    status.classList.toggle('text-success', available);
+    status.classList.toggle('bg-danger-lt', !available);
+    status.classList.toggle('text-danger', !available);
+    status.textContent = statusText || (
+      available
+        ? "{{ 'Available'|trans }}"
+        : "{{ 'Unavailable'|trans }}"
+    );
+  }
 
-  input.classList.add('d-none');
-  box.classList.remove('d-none');
-  text.textContent = input.value;
-}
+  if (icon) {
+    icon.classList.toggle('bg-success-lt', available);
+    icon.classList.toggle('text-success', available);
+    icon.classList.toggle('bg-danger-lt', !available);
+    icon.classList.toggle('text-danger', !available);
+  }
 
-function unlockDomainInput() {
-  const input = document.querySelector('input[name="domain_name"]');
-  const box = document.getElementById('domain-selected');
-  const text = document.getElementById('domain-selected-text');
+  if (iconPath) {
+    iconPath.setAttribute(
+      'd',
+      available
+        ? 'M5 12l5 5l10 -10'
+        : 'M18 6l-12 12m0 -12l12 12'
+    );
+  }
 
-  if (!input || !box || !text) return;
+  if (period) {
+    period.classList.toggle('d-none', !available || isTransfer);
+  }
 
-  input.classList.remove('d-none');
-  box.classList.add('d-none');
-  text.textContent = '';
+  if (transferCode) {
+    transferCode.classList.toggle('d-none', !available || !isTransfer);
+  }
 
-  input.readOnly = false;
-  input.focus();
+  if (price) {
+    price.classList.toggle('d-none', !available);
+  }
+
+  if (cart) {
+    cart.classList.toggle('d-none', !available);
+  }
+
+  if (yearsSelect) {
+    yearsSelect.disabled = !available || isTransfer;
+  }
+
+  if (transferCodeInput) {
+    transferCodeInput.disabled = !available || !isTransfer;
+  }
+
+  if (!available) {
+    hide(document.getElementById('config-next-domain'));
+  }
 }
 
 const currencyFormat = JSON.parse('{{ cart_currency|json_encode|e('js') }}');
@@ -419,7 +341,7 @@ function updateTransferCodeRequirement(tld) {
         transferCodeRequirements[key] === true ||
         transferCodeRequirements[alternateKey] === true;
 
-    input.required = requiresTransferCode;
+    input.required = true;
 
     if (hint) {
         hint.style.display = requiresTransferCode ? '' : 'none';
@@ -428,16 +350,8 @@ function updateTransferCodeRequirement(tld) {
 
 document.addEventListener("DOMContentLoaded", () => {
     hide(document.getElementById('config-next-domain'));
-    hide(document.getElementById('config-next-domain2'));
-    hideFooter();
 
-    document.querySelectorAll('.onAfterDomainCheck, .onAfterDomainCheck2').forEach(hide);
-    hide(document.getElementById('domain-transfer-config-wrap'));
-    hide(document.getElementById('transfer-price'));
-
-    hide(document.getElementById('registration-wrap'));
-    hide(document.getElementById('registration-years'));
-    hide(document.getElementById('registration-price'));
+    hide(document.getElementById('domain-result-card'));
 
     document.querySelectorAll('#register .order-button').forEach(hide);
 
@@ -449,11 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.removeItem("selected_domain");
         }
     }
-
-    ['config-next', 'config-next-domain', 'config-next-domain2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
 
     if (document.querySelector('.addons')) {
         document.querySelectorAll('.order-button').forEach(btn => {
@@ -508,6 +417,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            hide(document.getElementById('domain-result-card'));
+            hide(document.getElementById('config-next-domain'));
+
             const parts = domain.split('.');
             let sld = '';
             let tld = '';
@@ -532,37 +444,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 'servicedomain/can_be_transferred',
                 { sld: sld, tld: tld },
                 function (result) {
-                    setTransferPricing(tld);
                     hideTldPricingCard();
 
-                    const domainNameEl = document.getElementById('domain-name');
-                    if (domainNameEl) domainNameEl.textContent = domain;
-
-                    lockDomainInput(domain);
-
-                    const transferPrice = document.getElementById('transfer-price');
-                    if (transferPrice) fadeIn(transferPrice);
-
-                    const transferConfigWrap = document.getElementById('domain-transfer-config-wrap');
-                    if (transferConfigWrap) {
-                        fadeIn(transferConfigWrap);
-                    }
+                    setDomainResult(
+                      domain,
+                      true,
+                      "{{ 'Available for transfer'|trans }}",
+                      'transfer'
+                    );
+                    fadeIn(document.getElementById('domain-result-card'));
 
                     updateTransferCodeRequirement(tld);
+                    setTransferPricing(tld, domain);
 
                     const infoText = document.getElementById('info-text');
                     if (infoText) infoText.style.display = 'none';
 
-                    const domainCheckBtn = document.getElementById('domain-check');
-                    if (domainCheckBtn) domainCheckBtn.style.display = 'none';
-
-                    transferCheck.style.display = 'none';
-
                     const orderBtn = document.querySelector('#register .order-button');
                     if (orderBtn) orderBtn.style.display = '';
                 },
-                function (err) {
-                    FOSSBilling.message(err?.message || "Transfer check failed");
+                function () {
+                    hideTldPricingCard();
+
+                    const statusText = "{{ 'Transfer unavailable'|trans }}";
+
+                    setDomainResult(domain, false, statusText, 'transfer');
+                    fadeIn(document.getElementById('domain-result-card'));
+
+                    domainInput.readOnly = false;
                 }
             );
         });
@@ -570,6 +479,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const domainCheck = document.getElementById('domain-check');
     if (domainCheck) {
+        document.querySelector('input[name="domain_name"]')?.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            domainCheck.click();
+        });
+
         domainCheck.addEventListener('click', function (e) {
             e.preventDefault();
 
@@ -581,6 +496,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 FOSSBilling.message("{{ 'Please enter a domain name'|trans }}");
                 return;
             }
+
+            hide(document.getElementById('domain-result-card'));
+            hide(document.getElementById('config-next-domain'));
 
             const parts = domain.split('.');
             let sld = '';
@@ -606,23 +524,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 'servicedomain/check',
                 { sld: sld, tld: tld },
                 function (result) {
-                    setPricing(tld);
                     hideTldPricingCard();
 
-                    const domainNameEl = document.getElementById('domain-name');
-                    if (domainNameEl) domainNameEl.textContent = domain;
+                    setDomainResult(domain, true, null, 'register');
+                    fadeIn(document.getElementById('domain-result-card'));
+                    setPricing(tld);
 
-                    lockDomainInput(domain);
-
-                    document.querySelectorAll('.onAfterDomainCheck').forEach(el => fadeIn(el));
-                    document.querySelectorAll('.onAfterDomainCheck2').forEach(el => fadeIn(el));
-
-                    const transferBtn = document.getElementById('transfer-check');
                     const infoText = document.getElementById('info-text');
                     const orderBtn = document.querySelector('#register .order-button');
 
-                    domainCheck.style.display = 'none';
-                    if (transferBtn) transferBtn.style.display = 'none';
                     if (infoText) infoText.style.display = 'none';
                     if (orderBtn) orderBtn.style.display = '';
                 },
@@ -634,10 +544,28 @@ document.addEventListener("DOMContentLoaded", () => {
                       err?.result?.message ||
                       "Domain check failed";
 
-                    const code =
-                      err?.code || err?.error?.code || err?.result?.code;
+                    hideTldPricingCard();
 
-                    FOSSBilling.message(code ? `${msg} (Code: ${code})` : msg);
+                    const rawMsg = String(msg).trim();
+
+                    let statusText = rawMsg;
+
+                    if (/^domain is not available[.!]?\s*$/i.test(rawMsg)) {
+                      statusText = "{{ 'Unavailable'|trans }}";
+                    } else if (/^domain is not available\b/i.test(rawMsg)) {
+                      let details = rawMsg
+                        .replace(/^domain is not available\b[\s:;,.!-]*/i, '')
+                        .replace(/^because\s+/i, '')
+                        .replace(/^domain is\s+/i, '')
+                        .trim();
+
+                      statusText = details
+                        ? `{{ 'Unavailable'|trans }}: ${details}`
+                        : "{{ 'Unavailable'|trans }}";
+                    }
+
+                    setDomainResult(domain, false, statusText, 'register');
+                    fadeIn(document.getElementById('domain-result-card'));
 
                     domainInput.readOnly = false;
                 }
@@ -698,13 +626,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 
                 const priceEl = document.getElementById('registration-price');
+                const renewalEl = document.getElementById('registration-renewal');
 
                 const updatePrice = () => {
                   const selected = yearsSelect.options[yearsSelect.selectedIndex];
                   if (!selected) return;
                   if (priceEl) {
                     priceEl.textContent = selected.dataset.price || '';
-                    fadeIn(priceEl, 'flex');
                   }
                 };
 
@@ -713,10 +641,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 yearsSelect.selectedIndex = 0;
                 updatePrice();
 
-                fadeIn(document.getElementById('registration-wrap'), 'flex');
-                fadeIn(document.getElementById('registration-years'), '');
+                if (renewalEl) {
+                    renewalEl.textContent = `{{ 'Renews at'|trans }} ${formatMoney(renewPrice * conversionRate)}/{{ 'yr'|trans }}`;
+                }
+
                 show(document.getElementById('config-next-domain'));
-                showFooter();
             },
             function (err) {
                 FOSSBilling.message(err?.message || "Could not load pricing");
@@ -724,40 +653,45 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-    function setTransferPricing(tld) {
+    function setTransferPricing(tld, domain) {
         FOSSBilling.api.guest.post(
             'servicedomain/pricing',
             { tld: tld },
             function (result) {
-                const conversionRate = Number('{{ currency.conversion_rate|default(1) }}');
+                const conversionRate = Number('{{ cart_currency.conversion_rate|default(1) }}');
 
                 const price = formatMoney(
                     Number(result.price_transfer) * conversionRate
                 );
 
-                const transferPriceEl = document.getElementById('transfer-price');
-                if (transferPriceEl) {
-                    transferPriceEl.textContent = price;
-                    fadeIn(transferPriceEl, 'flex');
+                const priceEl = document.getElementById('registration-price');
+                const renewalEl = document.getElementById('registration-renewal');
+
+                if (priceEl) {
+                    priceEl.textContent = price;
                 }
 
-                const nextBtnWrap = document.getElementById('config-next-domain2');
-                if (nextBtnWrap) {
-                    nextBtnWrap.style.display = '';
+                if (renewalEl) {
+                    renewalEl.textContent = "{{ 'Transfer'|trans }}";
                 }
 
-                showFooter();
-
-                const nextBtn = nextBtnWrap
-                    ? nextBtnWrap.querySelector('button[type="submit"]')
-                    : null;
-
-                if (nextBtn) {
-                    nextBtn.disabled = false;
-                }
+                show(document.getElementById('config-next-domain'));
             },
             function (err) {
-                FOSSBilling.message(err?.message || "Could not load pricing");
+                const msg =
+                  err?.message ||
+                  err?.error?.message ||
+                  err?.error ||
+                  err?.result?.message ||
+                  "Could not load pricing";
+
+                setDomainResult(
+                  domain,
+                  false,
+                  msg,
+                  'transfer'
+                );
+                fadeIn(document.getElementById('domain-result-card'));
             }
         );
     }
