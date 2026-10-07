@@ -679,7 +679,6 @@ document.addEventListener("DOMContentLoaded", () => {
             hide(document.getElementById('info-text'));
             bulkResults.classList.remove('d-none');
             bulkResults.setAttribute('aria-busy', 'true');
-            bulkResults.textContent = "{{ 'Checking...'|trans|e('js') }}";
 
             FOSSBilling.api.guest.post(
                 'domainx/check_all',
