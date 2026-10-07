@@ -34,22 +34,23 @@
 
     <div class="card mb-4">
       <div class="card-header py-3">
-        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap w-100">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-nowrap w-100">
           <div class="flex-fill">
             <h1 class="mb-1">
               {{ service.domain }} {{ mf.status_badge(order.status, 'order') }}
             </h1>
             {% if order.period and order.expires_at %}
+              {% set days_left = order.expires_at|daysleft %}
+              {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'primary') %}
               <div class="d-flex align-items-center gap-2 small text-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
                 <span>
                   {{ 'Renews on'|trans }}
                   <strong>{{ order.expires_at|date('Y-m-d') }}</strong>
                   {{ 'for'|trans }}
                   <strong>{{ order.total|format_currency(order.currency ?? default_currency) }}</strong>
                 </span>
-                <span class="badge bg-info-lt text-info">
-                  {{ order.expires_at|daysleft }} {{ 'days left'|trans }}
+                <span class="badge d-none d-sm-inline bg-{{ renewal_color }}-lt text-{{ renewal_color }}">
+                  {{ days_left }} {{ 'days left'|trans }}
                 </span>
               </div>
             {% else %}
@@ -58,8 +59,8 @@
           </div>
 
           {% if order.period and order.status != 'failed_renew' %}
-            <div class="ms-auto">
-              <a class="btn btn-success btn-sm"
+            <div class="ms-auto flex-shrink-0 align-self-center">
+              <a class="btn btn-outline btn-{{ renewal_color }} px-2 px-sm-3 text-nowrap"
                  {{ fb_api_link({
                    href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}),
                    modal: {
@@ -94,513 +95,460 @@
         </div>
 
         <div class="row row-cards mb-4">
-            <div class="col-12 col-lg-6">
-              <div class="btn-list mb-3 d-none" id="domain-settings-switcher">
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  data-domain-panel="nameservers">
-                  {{ 'Nameservers'|trans }}
-                </button>
-
-                {% if domainx_enabled %}
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm d-none"
-                    id="domain-panel-glue-button"
-                    data-domain-panel="glue-hosts">
-                    {{ 'Hosts'|trans }}
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm d-none"
-                    id="domain-panel-dnssec-button"
-                    data-domain-panel="dnssec">
-                    {{ 'DNSSEC'|trans }}
-                  </button>
-                {% endif %}
-
-                {% if dns_order %}
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    data-domain-panel="dns-hosting">
-                    {{ 'DNS'|trans }}
-                  </button>
-                {% endif %}
-              </div>
-
-              <div class="card mb-4" id="nameservers">
-                <div class="card-header">
-                    <div class="d-flex flex-column">
-                      <h3 class="card-title mb-1">{{ 'Nameservers'|trans }}</h3>
-                      <div class="text-muted small">
-                        {{ 'If you would like to host this domain with another company you can update nameservers.'|trans }}
-                      </div>
-                    </div>
-                </div>
-                <div class="card-body">
-
-                  <form method="post" action="{{ 'servicedomain/update_nameservers'|api_url }}" {{ fb_api_form({message: 'Nameservers Updated'|trans}) }}>
-                    <input type="hidden" name="order_id" value="{{ order.id }}">
-
-                    <div class="row g-3">
-                      <div class="col-12 col-md-6">
-                        <label for="ns1" class="form-label">{{ 'Nameserver 1'|trans }}</label>
-                        <input class="form-control" type="text" name="ns1" id="ns1" value="{{ request.ns1|default(service.ns1) }}" autocapitalize="off" required>
-                      </div>
-                      <div class="col-12 col-md-6">
-                        <label for="ns2" class="form-label">{{ 'Nameserver 2'|trans }}</label>
-                        <input class="form-control" type="text" name="ns2" id="ns2" value="{{ request.ns2|default(service.ns2) }}" autocapitalize="off" required>
-                      </div>
-                      <div class="col-12 col-md-6">
-                        <label for="ns3" class="form-label">{{ 'Nameserver 3'|trans }}</label>
-                        <input class="form-control" type="text" name="ns3" id="ns3" value="{{ request.ns3|default(service.ns3) }}" autocapitalize="off">
-                      </div>
-                      <div class="col-12 col-md-6">
-                        <label for="ns4" class="form-label">{{ 'Nameserver 4'|trans }}</label>
-                        <input class="form-control" type="text" name="ns4" id="ns4" value="{{ request.ns4|default(service.ns4) }}" autocapitalize="off">
-                      </div>
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between mt-4">
-                      <div class="text-muted small">
-                        {{ 'Changes can take some time to propagate.'|trans }}
-                      </div>
-                      <button class="btn btn-primary" type="submit">{{ 'Update'|trans }}</button>
-                    </div>
-                  </form>
-
-                </div>
-              </div>
+          <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+            <div class="btn-list mb-1 d-none" id="domain-settings-switcher">
+              <button type="button" class="btn btn-secondary btn-sm" data-domain-panel="nameservers">{{ 'Nameservers'|trans }}</button>
 
               {% if domainx_enabled %}
-              <div class="card mb-4 d-none" id="glue-hosts" data-created-text="{{ 'Glue hostname created successfully'|trans }}" data-updated-text="{{ 'Glue hostname updated successfully'|trans }}" data-deleted-text="{{ 'Glue hostname deleted successfully'|trans }}" data-confirm-text="{{ 'Delete this glue hostname? It must first be removed from any domains using it.'|trans }}" data-address-required="{{ 'Enter an IP address to add or remove.'|trans }}" data-current-text="{{ 'Use as current'|trans }}" data-no-addresses="{{ 'No IP addresses were returned for this hostname.'|trans }}">
-                <div class="card-header">
-                  <div class="d-flex flex-column">
-                    <h3 class="card-title mb-1">{{ 'Hosts'|trans }}</h3>
-                    <div class="text-muted small">
-                      {{ 'Create and manage nameserver hostnames within this domain. Update nameserver assignments separately above.'|trans }}
-                    </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="domain-panel-glue-button" data-domain-panel="glue-hosts">{{ 'Hosts'|trans }}</button>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="domain-panel-dnssec-button" data-domain-panel="dnssec">{{ 'DNSSEC'|trans }}</button>
+              {% endif %}
+
+              {% if dns_order %}
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-domain-panel="dns-hosting">{{ 'DNS'|trans }}</button>
+              {% endif %}
+            </div>
+
+            <div class="card" id="nameservers">
+              <div class="card-header">
+                <div class="d-flex flex-column">
+                  <h3 class="card-title mb-1">{{ 'Nameservers'|trans }}</h3>
+                  <div class="text-muted small">
+                    {{ 'If you would like to host this domain with another company you can update nameservers.'|trans }}
                   </div>
                 </div>
-                <div class="card-body">
-                  <div class="btn-group mb-4" role="group" aria-label="{{ 'Glue hostname action'|trans }}">
-                    <button class="btn btn-primary btn-sm" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
-                    <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
-                    <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
+              </div>
+              <div class="card-body">
+                <form method="post" action="{{ 'servicedomain/update_nameservers'|api_url }}" {{ fb_api_form({message: 'Nameservers Updated'|trans}) }}>
+                  <input type="hidden" name="order_id" value="{{ order.id }}">
+
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label for="ns1" class="form-label">{{ 'Nameserver 1'|trans }}</label>
+                      <input class="form-control" type="text" name="ns1" id="ns1" value="{{ request.ns1|default(service.ns1) }}" autocapitalize="off" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="ns2" class="form-label">{{ 'Nameserver 2'|trans }}</label>
+                      <input class="form-control" type="text" name="ns2" id="ns2" value="{{ request.ns2|default(service.ns2) }}" autocapitalize="off" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="ns3" class="form-label">{{ 'Nameserver 3'|trans }}</label>
+                      <input class="form-control" type="text" name="ns3" id="ns3" value="{{ request.ns3|default(service.ns3) }}" autocapitalize="off">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="ns4" class="form-label">{{ 'Nameserver 4'|trans }}</label>
+                      <input class="form-control" type="text" name="ns4" id="ns4" value="{{ request.ns4|default(service.ns4) }}" autocapitalize="off">
+                    </div>
                   </div>
 
-                  <form id="glue-form">
-                    <div class="mb-3">
-                      <label class="form-label" for="glue-hostname">{{ 'Hostname'|trans }}</label>
-                      <input class="form-control" id="glue-hostname" type="text" placeholder="ns1.{{ service.domain }}" maxlength="253" autocapitalize="off" autocomplete="off" spellcheck="false" required>
-                      <div class="form-hint">{{ 'Enter a hostname inside this domain, such as ns1.example.com.'|trans }}</div>
+                  <div class="d-flex align-items-center justify-content-between mt-4">
+                    <div class="text-muted small">
+                      {{ 'Changes can take some time to propagate.'|trans }}
                     </div>
+                    <button class="btn btn-primary" type="submit">{{ 'Update'|trans }}</button>
+                  </div>
+                </form>
 
-                    <div id="glue-create-fields" class="mb-3">
-                      <label class="form-label" for="glue-ip-address">{{ 'IP address (IPv4 or IPv6)'|trans }}</label>
-                      <input class="form-control" id="glue-ip-address" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false" required>
+              </div>
+            </div>
+
+            {% if domainx_enabled %}
+            <div class="card d-none" id="glue-hosts" data-created-text="{{ 'Glue hostname created successfully'|trans }}" data-updated-text="{{ 'Glue hostname updated successfully'|trans }}" data-deleted-text="{{ 'Glue hostname deleted successfully'|trans }}" data-confirm-text="{{ 'Delete this glue hostname? It must first be removed from any domains using it.'|trans }}" data-address-required="{{ 'Enter an IP address to add or remove.'|trans }}" data-current-text="{{ 'Use as current'|trans }}" data-no-addresses="{{ 'No IP addresses were returned for this hostname.'|trans }}">
+              <div class="card-header">
+                <div class="d-flex flex-column">
+                  <h3 class="card-title mb-1">{{ 'Hosts'|trans }}</h3>
+                  <div class="text-muted small">
+                    {{ 'Create and manage nameserver hostnames within this domain.'|trans }}
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="btn-group mb-4" role="group" aria-label="{{ 'Glue hostname action'|trans }}">
+                  <button class="btn btn-primary btn-sm" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
+                </div>
+
+                <form id="glue-form">
+                  <div class="mb-3">
+                    <label class="form-label" for="glue-hostname">{{ 'Hostname'|trans }}</label>
+                    <input class="form-control" id="glue-hostname" type="text" placeholder="ns1.{{ service.domain }}" maxlength="253" autocapitalize="off" autocomplete="off" spellcheck="false" required>
+                    <div class="form-hint">{{ 'Enter a hostname inside this domain, such as ns1.example.com.'|trans }}</div>
+                  </div>
+
+                  <div id="glue-create-fields" class="mb-3">
+                    <label class="form-label" for="glue-ip-address">{{ 'IP address (IPv4 or IPv6)'|trans }}</label>
+                    <input class="form-control" id="glue-ip-address" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false" required>
+                  </div>
+
+                  <div id="glue-update-fields" class="d-none mb-3">
+                    <button class="btn btn-sm btn-outline-secondary mb-3" id="glue-lookup" type="button">{{ 'Show current IP addresses'|trans }}</button>
+                    <div id="glue-info" class="d-none mb-3">
+                      <div class="text-muted small mb-2">{{ 'Current IP addresses at the registry'|trans }}</div>
+                      <div class="d-flex flex-wrap gap-2" id="glue-addresses"></div>
                     </div>
-
-                    <div id="glue-update-fields" class="d-none mb-3">
-                      <button class="btn btn-sm btn-outline-secondary mb-3" id="glue-lookup" type="button">{{ 'Show current IP addresses'|trans }}</button>
-                      <div id="glue-info" class="d-none mb-3">
-                        <div class="text-muted small mb-2">{{ 'Current IP addresses at the registry'|trans }}</div>
-                        <div class="d-flex flex-wrap gap-2" id="glue-addresses"></div>
+                    <div class="row g-3">
+                      <div class="col-12 col-md-6">
+                        <label class="form-label" for="glue-current-ip">{{ 'Current IP address (remove)'|trans }}</label>
+                        <input class="form-control" id="glue-current-ip" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false">
                       </div>
-                      <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                          <label class="form-label" for="glue-current-ip">{{ 'Current IP address (remove)'|trans }}</label>
-                          <input class="form-control" id="glue-current-ip" type="text" placeholder="192.0.2.1" autocapitalize="off" autocomplete="off" spellcheck="false">
-                        </div>
-                        <div class="col-12 col-md-6">
-                          <label class="form-label" for="glue-new-ip">{{ 'New IP address (add)'|trans }}</label>
-                          <input class="form-control" id="glue-new-ip" type="text" placeholder="2001:db8::1" autocapitalize="off" autocomplete="off" spellcheck="false">
-                        </div>
+                      <div class="col-12 col-md-6">
+                        <label class="form-label" for="glue-new-ip">{{ 'New IP address (add)'|trans }}</label>
+                        <input class="form-control" id="glue-new-ip" type="text" placeholder="2001:db8::1" autocapitalize="off" autocomplete="off" spellcheck="false">
                       </div>
-                      <div class="form-hint mt-2">{{ 'Fill only New to add, only Current to remove, or both to replace one address.'|trans }}</div>
                     </div>
+                    <div class="form-hint mt-2">{{ 'Fill only New to add, only Current to remove, or both to replace one address.'|trans }}</div>
+                  </div>
 
-                    <div id="glue-delete-note" class="alert alert-warning d-none mb-3">
-                      {{ 'The registry may reject deletion while a domain still uses this hostname.'|trans }}
-                    </div>
+                  <div id="glue-delete-note" class="alert alert-warning d-none mb-3">
+                    {{ 'The registry may reject deletion while a domain still uses this hostname.'|trans }}
+                  </div>
 
-                    <div class="d-flex justify-content-end">
-                      <button class="btn btn-primary" id="glue-submit" type="submit">{{ 'Create hostname'|trans }}</button>
-                    </div>
-                  </form>
+                  <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" id="glue-submit" type="submit">{{ 'Create hostname'|trans }}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card d-none" id="dnssec" data-delete-text="{{ 'Delete'|trans }}" data-delete-confirm="{{ 'Remove this DNSSEC DS record?'|trans }}" data-added-text="{{ 'DNSSEC DS record added successfully'|trans }}" data-removed-text="{{ 'DNSSEC DS record removed successfully'|trans }}">
+              <div class="card-header">
+                <div class="d-flex flex-column">
+                  <h3 class="card-title mb-1">{{ 'DNSSEC DS Records'|trans }}</h3>
+                  <div class="text-muted small">
+                    {{ 'Current DS records are read directly from the domain registry.'|trans }}
+                  </div>
                 </div>
               </div>
 
-              <div class="card mb-4 d-none" id="dnssec" data-delete-text="{{ 'Delete'|trans }}" data-delete-confirm="{{ 'Remove this DNSSEC DS record?'|trans }}" data-added-text="{{ 'DNSSEC DS record added successfully'|trans }}" data-removed-text="{{ 'DNSSEC DS record removed successfully'|trans }}">
-                <div class="card-header">
-                  <div class="d-flex flex-column">
-                    <h3 class="card-title mb-1">{{ 'DNSSEC DS Records'|trans }}</h3>
-                    <div class="text-muted small">
-                      {{ 'Current DS records are read directly from the domain registry.'|trans }}
-                    </div>
-                  </div>
+              <div class="card-body">
+                <div id="dnssec-empty" class="text-muted mb-4 d-none">
+                  {{ 'No DNSSEC DS records are currently configured.'|trans }}
                 </div>
 
-                <div class="card-body">
-                  <div id="dnssec-empty" class="text-muted mb-4 d-none">
-                    {{ 'No DNSSEC DS records are currently configured.'|trans }}
-                  </div>
-
-                  <div id="dnssec-current" class="table-responsive mb-4 d-none">
-                    <table class="table table-vcenter">
-                      <thead>
-                        <tr>
-                          <th>{{ 'Key Tag'|trans }}</th>
-                          <th>{{ 'Algorithm'|trans }}</th>
-                          <th>{{ 'Digest Type'|trans }}</th>
-                          <th>{{ 'Digest'|trans }}</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody id="dnssec-records"></tbody>
-                    </table>
-                  </div>
-
-                  <div id="dnssec-limit" class="alert alert-info d-none">
-                    {{ 'Two DS records are configured. Remove one before adding another.'|trans }}
-                  </div>
-
-                  <form id="dnssec-add-form" class="d-none" method="post" action="{{ 'domainx/dnssec_add'|api_url }}" {{ fb_api_form({callback: 'domainxDnssecAdded'}) }}>
-                    <input type="hidden" name="order_id" value="{{ order.id }}">
-
-                    <div class="form-group row mb-2">
-                      <label for="dnssec-key-tag" class="col-md-4 col-form-label required">
-                        {{ 'Key Tag'|trans }}
-                      </label>
-                      <div class="col-md-6">
-                        <input class="form-control" type="number" name="key_tag" id="dnssec-key-tag" min="0" max="65535" step="1" placeholder="33409" required>
-                      </div>
-                    </div>
-
-                    <div class="form-group row mb-2">
-                      <label for="dnssec-algorithm" class="col-md-4 col-form-label required">
-                        {{ 'Algorithm'|trans }}
-                      </label>
-                      <div class="col-md-6">
-                        <select name="algorithm" id="dnssec-algorithm" class="form-control form-select" required>
-                          <option value="8">8: RSA/SHA-256</option>
-                          <option value="13">13: ECDSA Curve P-256 with SHA-256</option>
-                          <option value="14">14: ECDSA Curve P-384 with SHA-384</option>
-                          <option value="15">15: Ed25519</option>
-                          <option value="16">16: Ed448</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="form-group row mb-2">
-                      <label for="dnssec-digest-type" class="col-md-4 col-form-label required">
-                        {{ 'Digest Type'|trans }}
-                      </label>
-                      <div class="col-md-6">
-                        <select name="digest_type" id="dnssec-digest-type" class="form-control form-select" required>
-                          <option value="2">2: SHA-256</option>
-                          <option value="4">4: SHA-384</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="form-group row mb-2">
-                      <label for="dnssec-digest" class="col-md-4 col-form-label required">
-                        {{ 'Digest'|trans }}
-                      </label>
-                      <div class="col-md-6">
-                        <input class="form-control font-monospace" type="text" name="digest" id="dnssec-digest" minlength="40" maxlength="128" pattern="[0-9A-Fa-f]{40,128}" autocomplete="off" spellcheck="false" required>
-                      </div>
-                    </div>
-
-                    <div class="form-check mt-4">
-                      <input class="form-check-input" type="checkbox" id="dnssec-confirm" required>
-                      <label class="form-check-label" for="dnssec-confirm">
-                        {{ 'I confirm that these DS values match the DNSSEC key published by the authoritative DNS provider.'|trans }}
-                      </label>
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-4">
-                      <button type="submit" class="btn btn-primary">
-                        {{ 'Add DNSSEC Record'|trans }}
-                      </button>
-                    </div>
-                  </form>
+                <div id="dnssec-current" class="table-responsive mb-4 d-none">
+                  <table class="table table-vcenter">
+                    <thead>
+                      <tr>
+                        <th>{{ 'Key Tag'|trans }}</th>
+                        <th>{{ 'Algorithm'|trans }}</th>
+                        <th>{{ 'Digest Type'|trans }}</th>
+                        <th>{{ 'Digest'|trans }}</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="dnssec-records"></tbody>
+                  </table>
                 </div>
+
+                <div id="dnssec-limit" class="alert alert-info d-none">
+                  {{ 'Two DS records are configured. Remove one before adding another.'|trans }}
+                </div>
+
+                <form id="dnssec-add-form" class="d-none" method="post" action="{{ 'domainx/dnssec_add'|api_url }}" {{ fb_api_form({callback: 'domainxDnssecAdded'}) }}>
+                  <input type="hidden" name="order_id" value="{{ order.id }}">
+
+                  <div class="form-group row mb-2">
+                    <label for="dnssec-key-tag" class="col-md-4 col-form-label required">
+                      {{ 'Key Tag'|trans }}
+                    </label>
+                    <div class="col-md-6">
+                      <input class="form-control" type="number" name="key_tag" id="dnssec-key-tag" min="0" max="65535" step="1" placeholder="33409" required>
+                    </div>
+                  </div>
+
+                  <div class="form-group row mb-2">
+                    <label for="dnssec-algorithm" class="col-md-4 col-form-label required">
+                      {{ 'Algorithm'|trans }}
+                    </label>
+                    <div class="col-md-6">
+                      <select name="algorithm" id="dnssec-algorithm" class="form-control form-select" required>
+                        <option value="8">8: RSA/SHA-256</option>
+                        <option value="13">13: ECDSA Curve P-256 with SHA-256</option>
+                        <option value="14">14: ECDSA Curve P-384 with SHA-384</option>
+                        <option value="15">15: Ed25519</option>
+                        <option value="16">16: Ed448</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group row mb-2">
+                    <label for="dnssec-digest-type" class="col-md-4 col-form-label required">
+                      {{ 'Digest Type'|trans }}
+                    </label>
+                    <div class="col-md-6">
+                      <select name="digest_type" id="dnssec-digest-type" class="form-control form-select" required>
+                        <option value="2">2: SHA-256</option>
+                        <option value="4">4: SHA-384</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group row mb-2">
+                    <label for="dnssec-digest" class="col-md-4 col-form-label required">
+                      {{ 'Digest'|trans }}
+                    </label>
+                    <div class="col-md-6">
+                      <input class="form-control font-monospace" type="text" name="digest" id="dnssec-digest" minlength="40" maxlength="128" pattern="[0-9A-Fa-f]{40,128}" autocomplete="off" spellcheck="false" required>
+                    </div>
+                  </div>
+
+                  <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="dnssec-confirm" required>
+                    <label class="form-check-label" for="dnssec-confirm">
+                      {{ 'I confirm that these DS values match the DNSSEC key published by the authoritative DNS provider.'|trans }}
+                    </label>
+                  </div>
+
+                  <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                      {{ 'Add DNSSEC Record'|trans }}
+                    </button>
+                  </div>
+                </form>
               </div>
+            </div>
             {% endif %}
 
             {% if dns_order %}
-              <div class="card mb-4 d-none" id="dns-hosting">
-                <div class="card-header">
-                  <div class="d-flex align-items-center justify-content-between w-100">
-                    <div class="d-flex flex-column">
-                      <h3 class="card-title mb-1">{{ 'DNS Hosting'|trans }}</h3>
-                      <div class="text-muted small">
-                        {{ 'Manage DNS records for this domain.'|trans }}
-                      </div>
+            <div class="card d-none" id="dns-hosting">
+              <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                  <div class="d-flex flex-column">
+                    <h3 class="card-title mb-1">{{ 'DNS Hosting'|trans }}</h3>
+                    <div class="text-muted small">
+                      {{ 'Manage DNS records for this domain.'|trans }}
                     </div>
-
-                    <span id="linked-dnssec-status" class="badge d-none"></span>
-                  </div>
-                </div>
-
-                <div class="card-body">
-                  <div id="linked-dnssec-ds-section" class="d-none mb-4">
-                    <div class="fw-medium mb-1">{{ 'DNSSEC DS Records'|trans }}</div>
-                    <div class="text-secondary small mb-3">
-                      {{ 'Publish these DS records at your domain registrar:'|trans }}
-                    </div>
-
-                    <div id="linked-dnssec-ds"></div>
                   </div>
 
-                  <a
-                    class="btn btn-outline-primary btn-sm w-100"
-                    href='{{ "order/service/manage/#{dns_order.id}"|url }}'>
-                    {{ 'Manage DNS'|trans }}
-                  </a>
+                  <span id="linked-dnssec-status" class="badge d-none"></span>
                 </div>
               </div>
-            {% endif %}
-            
-            <div class="card">
+
               <div class="card-body">
-              <div class="row align-items-start">
-                <div class="col-auto">
-                     <span class="avatar bg-secondary-lt text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1 -4.069 0l-.301 -.301l-6.558 6.558a2 2 0 0 1 -1.239 .578l-.175 .008h-1.172a1 1 0 0 1 -.993 -.883l-.007 -.117v-1.172a2 2 0 0 1 .467 -1.284l.119 -.13l.414 -.414h2v-2h2v-2l2.144 -2.144l-.301 -.301a2.877 2.877 0 0 1 0 -4.069l2.643 -2.643a2.877 2.877 0 0 1 4.069 0" /><path d="M15 9h.01" /></svg>
-                     </span>
+                <div id="linked-dnssec-ds-section" class="d-none mb-4">
+                  <div class="fw-medium mb-1">{{ 'DNSSEC DS Records'|trans }}</div>
+                  <div class="text-secondary small mb-3">
+                    {{ 'Publish these DS records at your domain registrar:'|trans }}
+                  </div>
+
+                  <div id="linked-dnssec-ds"></div>
                 </div>
 
-                  <div class="col">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                      <h3 class="card-title mb-0">{{ 'Transfer code'|trans }}</h3>
-                    </div>
+                <a class="btn btn-outline-primary btn-sm w-100" href='{{ "order/service/manage/#{dns_order.id}"|url }}'>{{ 'Manage DNS'|trans }}</a>
+              </div>
+            </div>
+            {% endif %}
 
-                    <div class="text-secondary mt-3">
-                      {{ 'Use the authorization code to transfer your domain. Keep it private.'|trans }}
-                    </div>
+            <div class="card mt-4">
+              <div class="card-header">
+                <h3 class="card-title mb-0 d-flex align-items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M16.555 3.843l3.602 3.602a2.877 2.877 0 0 1 0 4.069l-2.643 2.643a2.877 2.877 0 0 1 -4.069 0l-.301 -.301l-6.558 6.558a2 2 0 0 1 -1.239 .578l-.175 .008h-1.172a1 1 0 0 1 -.993 -.883l-.007 -.117v-1.172a2 2 0 0 1 .467 -1.284l.119 -.13l.414 -.414h2v-2h2v-2l2.144 -2.144l-.301 -.301a2.877 2.877 0 0 1 0 -4.069l2.643 -2.643a2.877 2.877 0 0 1 4.069 0" /><path d="M15 9h.01" /></svg>
+                  {{ 'Transfer code'|trans }}
+                </h3>
+              </div>
 
-                    <div class="mt-4 d-flex align-items-center gap-2">
-                      <div
-                        id="epp-code-value"
-                        class="form-control font-monospace text-muted d-flex align-items-center"
-                        style="min-height: 2.5rem;">
-                        ••••••••••••
-                      </div>
+              <div class="card-body">
+                <div class="text-secondary">
+                  {{ 'Use the authorization code to transfer your domain. Keep it private.'|trans }}
+                </div>
 
-                      <button
-                        id="epp-code-reveal"
-                        type="button"
-                        class="btn btn-outline-secondary text-nowrap">
-                        {{ 'Reveal'|trans }}
-                      </button>
-                    </div>
+                <div class="mt-4 d-flex align-items-center gap-2">
+                  <div
+                    id="epp-code-value"
+                    class="form-control font-monospace text-muted d-flex align-items-center"
+                    style="min-height: 2.5rem;">
+                    ••••••••••••
                   </div>
+
+                  <button
+                    id="epp-code-reveal"
+                    type="button"
+                    class="btn btn-outline-secondary text-nowrap">
+                    {{ 'Reveal'|trans }}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="col-12 col-lg-6">
-              <div class="card" id="whois">
-                <div class="card-header">
-                    <div class="d-flex flex-column">
-                      <h3 class="card-title mb-1">{{ 'Registrant Details'|trans }}</h3>
-                      <div class="text-muted small">
-                        {{ 'Domain contact details may be displayed once someone will check RDAP output (which is public) of your service.'|trans }}
-                      </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                  <form method="post" action="{{ 'servicedomain/update_contacts'|api_url }}" {{ fb_api_form({message: 'Contact Details Updated'|trans}) }}>
-                    <input type="hidden" name="order_id" value="{{ order.id }}">
-
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                          <label for="whois_first_name" class="form-label">{{ 'First Name'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[first_name]" id="whois_first_name" value="{{ request.first_name|default(service.contact.first_name) }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                          <label for="whois_last_name" class="form-label">{{ 'Last Name'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[last_name]" id="whois_last_name" value="{{ request.last_name|default(service.contact.last_name) }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-12">
-                          <label for="whois_company" class="form-label">{{ 'Company'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[company]" id="whois_company" value="{{ request.company|default(service.contact.company) }}">
-                        </div>
-
-                        <div class="col-md-12">
-                          <label for="whois_address1" class="form-label">{{ 'Address'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[address1]" id="whois_address1" value="{{ request.address1|default(service.contact.address1) }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-4">
-                          <label for="whois_city" class="form-label">{{ 'City'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[city]" id="whois_city" value="{{ request.city|default(service.contact.city) }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-4">
-                          <label for="whois_state" class="form-label">{{ 'State'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[state]" id="whois_state" value="{{ request.state|default(service.contact.state) }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-4">
-                          <label for="whois_postcode" class="form-label">{{ 'Zip'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[postcode]" id="whois_postcode" value="{{ request.postcode|default(service.contact.postcode) }}" required>
-                        </div>
-
-                        <div class="col-md-12">
-                          <label for="whois_country" class="form-label required">{{ 'Country'|trans }}</label>
-                          <select class="form-select" name="contact[country]" id="whois_country" required>
-                            <option value="">{{ '-- Select country --'|trans }}</option>    
-                            {% set selected_country = request.country|default(service.contact.country) %}
-                            {% for val, label in guest.system_countries %}
-                              <option value="{{ val }}" {% if val == selected_country %}selected="selected"{% endif %}>
-                                {{ label|e }}
-                              </option>
-                            {% endfor %}
-                          </select>
-                        </div>
-
-                        <div class="col-md-6">
-                          <label for="whois_email" class="form-label">{{ 'Email'|trans }}</label>
-                          <input class="form-control" type="text" name="contact[email]" id="whois_email" value="{{ request.email|default(service.contact.email) }}" autocapitalize="off" required>
-                        </div>
-
-                        <div class="col-md-6">
-                          <label for="whois_phone" class="form-label">{{ 'Phone Number'|trans }}</label>
-                          <input type="hidden" name="contact[phone_cc]" id="whois_phone_cc" value="{{ request.phone_cc|default(service.contact.phone_cc) }}">
-                          <input class="form-control js-phone-input" type="tel" name="contact[phone]" id="whois_phone" value="{{ request.phone|default(service.contact.phone) }}" autocomplete="tel" data-initial-country="{{ request.country|default(service.contact.country)|lower }}" required>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <button class="btn btn-primary" type="submit">{{ 'Update'|trans }}</button>
-                    </div>
-                  </form>
+            <div class="card" id="whois">
+              <div class="card-header">
+                <div class="d-flex flex-column">
+                  <h3 class="card-title mb-1">{{ 'Registrant Details'|trans }}</h3>
+                  <div class="text-muted small">
+                    {{ 'Domain contact details may be displayed once someone will check RDAP output (which is public) of your service.'|trans }}
+                  </div>
                 </div>
               </div>
+              <div class="card-body">
+                <form method="post" action="{{ 'servicedomain/update_contacts'|api_url }}" {{ fb_api_form({message: 'Contact Details Updated'|trans}) }}>
+                  <input type="hidden" name="order_id" value="{{ order.id }}">
+
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label for="whois_first_name" class="form-label">{{ 'First Name'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[first_name]" id="whois_first_name" value="{{ request.first_name|default(service.contact.first_name) }}" required>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                      <label for="whois_last_name" class="form-label">{{ 'Last Name'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[last_name]" id="whois_last_name" value="{{ request.last_name|default(service.contact.last_name) }}" required>
+                    </div>
+
+                    <div class="col-12 col-md-12">
+                      <label for="whois_company" class="form-label">{{ 'Company'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[company]" id="whois_company" value="{{ request.company|default(service.contact.company) }}">
+                    </div>
+
+                    <div class="col-md-12">
+                      <label for="whois_address1" class="form-label">{{ 'Address'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[address1]" id="whois_address1" value="{{ request.address1|default(service.contact.address1) }}" required>
+					  <input type="hidden" name="contact[address2]" value="{{ request.address2|default(service.contact.address2|default('')) }}">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <label for="whois_city" class="form-label">{{ 'City'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[city]" id="whois_city" value="{{ request.city|default(service.contact.city) }}" required>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <label for="whois_state" class="form-label">{{ 'State'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[state]" id="whois_state" value="{{ request.state|default(service.contact.state) }}" required>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <label for="whois_postcode" class="form-label">{{ 'Zip'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[postcode]" id="whois_postcode" value="{{ request.postcode|default(service.contact.postcode) }}" required>
+                    </div>
+
+                    <div class="col-md-12">
+                      <label for="whois_country" class="form-label required">{{ 'Country'|trans }}</label>
+                      <select class="form-select" name="contact[country]" id="whois_country" required>
+                        <option value="">{{ '-- Select country --'|trans }}</option>    
+                        {% set selected_country = request.country|default(service.contact.country) %}
+                        {% for val, label in guest.system_countries %}
+                          <option value="{{ val }}" {% if val == selected_country %}selected="selected"{% endif %}>
+                            {{ label|e }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="whois_email" class="form-label">{{ 'Email'|trans }}</label>
+                      <input class="form-control" type="text" name="contact[email]" id="whois_email" value="{{ request.email|default(service.contact.email) }}" autocapitalize="off" required>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="whois_phone" class="form-label">{{ 'Phone Number'|trans }}</label>
+                      <input type="hidden" name="contact[phone_cc]" id="whois_phone_cc" value="{{ request.phone_cc|default(service.contact.phone_cc) }}">
+                      <input class="form-control js-phone-input" type="tel" name="contact[phone]" id="whois_phone" value="{{ request.phone|default(service.contact.phone) }}" autocomplete="tel" data-initial-country="{{ request.country|default(service.contact.country)|lower }}" required>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end mt-4">
+                    <button class="btn btn-primary" type="submit">{{ 'Update'|trans }}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="row row-cards">
-          {# Transfer Lock #}
-          <div class="col-12 col-lg-6">
+          <div class="col-12 col-lg-6 mb-3 mb-lg-0">
             <div class="card h-100">
-              <div class="card-body">
-
-              <div class="row align-items-start">
-                <div class="col-auto">
-                     <span class="avatar bg-secondary-lt text-secondary">
+              <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                  <h3 class="card-title mb-0 d-flex align-items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg>
-                     </span>
+                    {{ 'Transfer Lock'|trans }}
+                  </h3>
+
+                  <span
+                    id="domain-lock-badge"
+                    class="badge {% if service.locked == 1 %}bg-green-lt text-green{% else %}bg-yellow-lt text-yellow{% endif %}">
+                    {% if service.locked == 1 %}
+                      {{ 'Locked'|trans }}
+                    {% else %}
+                      {{ 'Unlocked'|trans }}
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="text-secondary">
+                  {{ 'Prevent unauthorized domain transfers by locking the domain.'|trans }}
                 </div>
 
-                  <div class="col">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                      <h3 class="card-title mb-0">
-                        {{ 'Transfer Lock'|trans }}
-                      </h3>
+                <div class="mt-4">
+                  <button
+                    class="btn btn-outline-danger"
+                    type="button"
+                    id="domain-unlock"
+                    {% if service.locked == 0 %}style="display:none;"{% endif %}>
+                    {{ 'Unlock domain'|trans }}
+                  </button>
 
-                      <span
-                        id="domain-lock-badge"
-                        class="badge {% if service.locked == 1 %}bg-green-lt text-green{% else %}bg-yellow-lt text-yellow{% endif %}">
-                        {% if service.locked == 1 %}
-                          {{ 'Locked'|trans }}
-                        {% else %}
-                          {{ 'Unlocked'|trans }}
-                        {% endif %}
-                      </span>
-                    </div>
-
-                    <div class="text-secondary mt-3">
-                      {{ 'Prevent unauthorized domain transfers by locking the domain at the registrar.'|trans }}
-                    </div>
-
-                    <div class="mt-4">
-                      <button
-                        class="btn btn-outline-danger"
-                        type="button"
-                        id="domain-unlock"
-                        {% if service.locked == 0 %}style="display:none;"{% endif %}>
-                        {{ 'Unlock domain'|trans }}
-                      </button>
-
-                      <button
-                        class="btn btn-outline-primary"
-                        type="button"
-                        id="domain-lock"
-                        {% if service.locked == 1 %}style="display:none;"{% endif %}>
-                        {{ 'Lock domain'|trans }}
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    class="btn btn-outline-primary"
+                    type="button"
+                    id="domain-lock"
+                    {% if service.locked == 1 %}style="display:none;"{% endif %}>
+                    {{ 'Lock domain'|trans }}
+                  </button>
                 </div>
-
               </div>
             </div>
           </div>
 
-          {# Privacy Protection #}
           <div class="col-12 col-lg-6">
             <div class="card h-100">
+              <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                  <h3 class="card-title mb-0 d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /><path d="M3 3l18 18" /></svg>
+                    {{ 'Privacy Protection'|trans }}
+                  </h3>
+
+                  <span
+                    id="domain-privacy-badge"
+                    class="badge {% if service.privacy == 1 %}bg-green-lt text-green{% else %}bg-secondary-lt text-secondary{% endif %}">
+                    {% if service.privacy == 1 %}
+                      {{ 'Enabled'|trans }}
+                    {% else %}
+                      {{ 'Disabled'|trans }}
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+
               <div class="card-body">
-
-              <div class="row align-items-start">
-                <div class="col-auto">
-                     <span class="avatar bg-secondary-lt text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
-                     </span>
+                <div class="text-secondary">
+                  {{ 'Hide eligible contact information from public domain lookup services.'|trans }}
                 </div>
 
-                  <div class="col">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                      <h3 class="card-title mb-0">
-                        {{ 'Privacy Protection'|trans }}
-                      </h3>
+                <div class="mt-4">
+                  <button
+                    class="btn btn-outline-danger"
+                    type="button"
+                    id="domain-disable-pp"
+                    {% if service.privacy == 0 %}style="display:none;"{% endif %}>
+                    {{ 'Disable privacy'|trans }}
+                  </button>
 
-                      <span
-                        id="domain-privacy-badge"
-                        class="badge {% if service.privacy == 1 %}bg-green-lt text-green{% else %}bg-secondary-lt text-secondary{% endif %}">
-                        {% if service.privacy == 1 %}
-                          {{ 'Enabled'|trans }}
-                        {% else %}
-                          {{ 'Disabled'|trans }}
-                        {% endif %}
-                      </span>
-                    </div>
-
-                    <div class="text-secondary mt-3">
-                      {{ 'Hide eligible contact information from public domain lookup services.'|trans }}
-                    </div>
-
-                    <div class="mt-4">
-                      <button
-                        class="btn btn-outline-danger"
-                        type="button"
-                        id="domain-disable-pp"
-                        {% if service.privacy == 0 %}style="display:none;"{% endif %}>
-                        {{ 'Disable privacy'|trans }}
-                      </button>
-
-                      <button
-                        class="btn btn-outline-primary"
-                        type="button"
-                        id="domain-enable-pp"
-                        {% if service.privacy == 1 %}style="display:none;"{% endif %}>
-                        {{ 'Enable privacy'|trans }}
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    class="btn btn-outline-primary"
+                    type="button"
+                    id="domain-enable-pp"
+                    {% if service.privacy == 1 %}style="display:none;"{% endif %}>
+                    {{ 'Enable privacy'|trans }}
+                  </button>
                 </div>
-
               </div>
             </div>
           </div>
