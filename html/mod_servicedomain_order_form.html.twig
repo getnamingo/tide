@@ -430,6 +430,59 @@ document.addEventListener("DOMContentLoaded", () => {
         return domainxRequestId;
     }
 
+    // Decode IDN labels for display only; API/cart values stay in ASCII form.
+    function domainxDisplayDomain(domain) {
+        const value = String(domain);
+        if (value.length > 253) return value;
+        return value.split('.').map(function (label) {
+            if (!/^xn--/i.test(label) || label.length > 63) return label;
+            try {
+                // Punycode decoding (RFC 3492), bounded to a single DNS label.
+                const encoded = label.slice(4).toLowerCase();
+                if (!/^[a-z0-9-]+$/.test(encoded)) return label;
+                const separator = encoded.lastIndexOf('-');
+                const points = separator < 0 ? [] : Array.from(encoded.slice(0, separator), char => char.charCodeAt(0));
+                let cursor = separator < 0 ? 0 : separator + 1;
+                let position = 0, codePoint = 128, bias = 72;
+                const maxInteger = 2147483647;
+                while (cursor < encoded.length) {
+                    const previous = position;
+                    let weight = 1;
+                    for (let step = 36; ; step += 36) {
+                        if (cursor >= encoded.length) return label;
+                        const char = encoded.charCodeAt(cursor++);
+                        const digit = char >= 97 && char <= 122 ? char - 97 : char >= 48 && char <= 57 ? char - 22 : 36;
+                        if (digit >= 36 || digit > Math.floor((maxInteger - position) / weight)) return label;
+                        position += digit * weight;
+                        const threshold = Math.max(1, Math.min(26, step - bias));
+                        if (digit < threshold) break;
+                        if (weight > Math.floor(maxInteger / (36 - threshold))) return label;
+                        weight *= 36 - threshold;
+                    }
+                    const count = points.length + 1;
+                    let delta = Math.floor((position - previous) / (previous === 0 ? 700 : 2));
+                    delta += Math.floor(delta / count);
+                    let adjustment = 0;
+                    while (delta > 455) {
+                        delta = Math.floor(delta / 35);
+                        adjustment += 36;
+                    }
+                    bias = adjustment + Math.floor(36 * delta / (delta + 38));
+                    codePoint += Math.floor(position / count);
+                    if (codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff)) return label;
+                    position %= count;
+                    points.splice(position++, 0, codePoint);
+                }
+                const decoded = String.fromCodePoint(...points);
+                // Reject invalid/noncanonical labels instead of displaying a different domain.
+                if (new URL('https://' + decoded + '.example').hostname !== label.toLowerCase() + '.example') return label;
+                return decoded;
+            } catch (_) {
+                return label;
+            }
+        }).join('.');
+    }
+
     function createDomainxResult(result, requestId) {
         // Reuse the existing full result layout, without duplicate IDs/form fields.
         const card = document.getElementById('domain-result-card').cloneNode(true);
@@ -456,7 +509,8 @@ document.addEventListener("DOMContentLoaded", () => {
         card.style.display = '';
         card.style.opacity = '1';
         card.style.transition = '';
-        name.textContent = result.domain;
+        const displayDomain = domainxDisplayDomain(result.domain);
+        name.textContent = displayDomain;
         name.classList.remove('text-truncate');
         name.classList.add('text-break');
 
@@ -479,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cartWrap.classList.toggle('d-none', !available);
         years.replaceChildren();
         years.disabled = true;
-        years.setAttribute('aria-label', result.domain + ' {{ 'Registration period'|trans|e('js') }}');
+        years.setAttribute('aria-label', displayDomain + ' {{ 'Registration period'|trans|e('js') }}');
         add.disabled = true;
         hide(cart);
         if (!available) return card;
@@ -704,7 +758,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    results.forEach(function (result) {
+                    results.slice(0, 10).forEach(function (result) {
                         bulkResults.appendChild(createDomainxResult(result, requestId));
                     });
                 },
