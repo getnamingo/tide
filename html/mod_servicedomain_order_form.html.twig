@@ -185,7 +185,9 @@
     </div>
 </div>
 
-<script>
+{% if domainx_enabled %}
+<script src="{{ 'libs/punycode/punycode.js' | asset_url }}"></script>
+{% endif %}<script>
 document.addEventListener("DOMContentLoaded", function () {
     const domain = sessionStorage.getItem("namingo_domain");
 
@@ -435,46 +437,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const value = String(domain);
         if (value.length > 253) return value;
         return value.split('.').map(function (label) {
-            if (!/^xn--/i.test(label) || label.length > 63) return label;
+            if (!/^xn--[a-z0-9-]+$/i.test(label) || label.length > 63) return label;
             try {
-                // Punycode decoding (RFC 3492), bounded to a single DNS label.
-                const encoded = label.slice(4).toLowerCase();
-                if (!/^[a-z0-9-]+$/.test(encoded)) return label;
-                const separator = encoded.lastIndexOf('-');
-                const points = separator < 0 ? [] : Array.from(encoded.slice(0, separator), char => char.charCodeAt(0));
-                let cursor = separator < 0 ? 0 : separator + 1;
-                let position = 0, codePoint = 128, bias = 72;
-                const maxInteger = 2147483647;
-                while (cursor < encoded.length) {
-                    const previous = position;
-                    let weight = 1;
-                    for (let step = 36; ; step += 36) {
-                        if (cursor >= encoded.length) return label;
-                        const char = encoded.charCodeAt(cursor++);
-                        const digit = char >= 97 && char <= 122 ? char - 97 : char >= 48 && char <= 57 ? char - 22 : 36;
-                        if (digit >= 36 || digit > Math.floor((maxInteger - position) / weight)) return label;
-                        position += digit * weight;
-                        const threshold = Math.max(1, Math.min(26, step - bias));
-                        if (digit < threshold) break;
-                        if (weight > Math.floor(maxInteger / (36 - threshold))) return label;
-                        weight *= 36 - threshold;
-                    }
-                    const count = points.length + 1;
-                    let delta = Math.floor((position - previous) / (previous === 0 ? 700 : 2));
-                    delta += Math.floor(delta / count);
-                    let adjustment = 0;
-                    while (delta > 455) {
-                        delta = Math.floor(delta / 35);
-                        adjustment += 36;
-                    }
-                    bias = adjustment + Math.floor(36 * delta / (delta + 38));
-                    codePoint += Math.floor(position / count);
-                    if (codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff)) return label;
-                    position %= count;
-                    points.splice(position++, 0, codePoint);
-                }
-                const decoded = String.fromCodePoint(...points);
-                // Reject invalid/noncanonical labels instead of displaying a different domain.
+                const decoded = window.domainxPunycode.toUnicode(label.toLowerCase());
+                // Only display valid labels that round-trip to the original name.
                 if (new URL('https://' + decoded + '.example').hostname !== label.toLowerCase() + '.example') return label;
                 return decoded;
             } catch (_) {
@@ -758,7 +724,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    results.slice(0, 10).forEach(function (result) {
+                    results.forEach(function (result) {
                         bulkResults.appendChild(createDomainxResult(result, requestId));
                     });
                 },
