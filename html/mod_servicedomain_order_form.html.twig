@@ -702,7 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             FOSSBilling.api.guest.post(
                 'domainx/check_all',
-                { sld: sld },
+                { sld: sld, tld: requestedTld },
                 function (data) {
                     if (requestId !== domainxRequestId) return;
                     bulkResults.replaceChildren();
