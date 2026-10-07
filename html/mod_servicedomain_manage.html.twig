@@ -224,16 +224,20 @@
             <div class="card d-none" id="dnssec" data-delete-text="{{ 'Delete'|trans }}" data-delete-confirm="{{ 'Remove this DNSSEC DS record?'|trans }}" data-added-text="{{ 'DNSSEC DS record added successfully'|trans }}" data-removed-text="{{ 'DNSSEC DS record removed successfully'|trans }}">
               <div class="card-header">
                 <div class="d-flex flex-column">
-                  <h3 class="card-title mb-1">{{ 'DNSSEC DS Records'|trans }}</h3>
+                  <h3 class="card-title mb-1">{{ 'DNSSEC'|trans }}</h3>
                   <div class="text-muted small">
-                    {{ 'Current DS records from the registry.'|trans }}
+                    {{ 'Manage DS records published at the registry.'|trans }}
                   </div>
                 </div>
               </div>
 
               <div class="card-body">
+                {% if dns_order %}
+                <div id="dnssec-provider-notice" class="alert d-none mb-4"></div>
+                {% endif %}
+
                 <div id="dnssec-empty" class="text-muted mb-4 d-none">
-                  {{ 'No DNSSEC DS records are currently configured.'|trans }}
+                  {{ 'No DS records are currently published at the registry.'|trans }}
                 </div>
 
                 <div id="dnssec-current" class="table-responsive mb-4 d-none">
@@ -305,14 +309,14 @@
 
                   <div class="form-check mt-4">
                     <input class="form-check-input" type="checkbox" id="dnssec-confirm" required>
-                    <label class="form-check-label" for="dnssec-confirm">
+                    <label class="form-check-label" for="dnssec-confirm" id="dnssec-confirm-label">
                       {{ 'I confirm that these DS values match the DNSSEC key published by the authoritative DNS provider.'|trans }}
                     </label>
                   </div>
 
                   <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-primary">
-                      {{ 'Add DNSSEC Record'|trans }}
+                    <button type="submit" class="btn btn-primary" id="dnssec-submit">
+                      {{ 'Add DS Record'|trans }}
                     </button>
                   </div>
                 </form>
@@ -337,7 +341,7 @@
                 <div id="linked-dnssec-ds-section" class="d-none mb-4">
                   <div class="fw-medium mb-1">{{ 'DNSSEC DS Records'|trans }}</div>
                   <div class="text-secondary small mb-3">
-                    {{ 'Publish these DS records at your domain registrar:'|trans }}
+                    {{ 'DNSSEC is enabled for this DNS service. Publish these DS records from the DNSSEC tab.'|trans }}
                   </div>
 
                   <div id="linked-dnssec-ds"></div>
@@ -743,6 +747,139 @@ document.getElementById('domain-sync').addEventListener('click', function (event
 });
 
 {% if dns_order %}
+let linkedDnssecState = null;
+let registryDnssecRecords = null;
+
+function normalizeDsRecord(record) {
+    if (typeof record === 'string') {
+        const parts = record.trim().split(/\s+/);
+        if (parts.length < 4) return null;
+
+        return {
+            key_tag: parts[0],
+            algorithm: parts[1],
+            digest_type: parts[2],
+            digest: parts.slice(3).join('').toUpperCase()
+        };
+    }
+
+    if (!record || typeof record !== 'object') return null;
+
+    const keyTag = record.key_tag ?? record.keytag ?? record.keyTag;
+    const algorithm = record.algorithm;
+    const digestType = record.digest_type ?? record.digestType;
+    const digest = record.digest;
+
+    if (
+        keyTag === undefined ||
+        algorithm === undefined ||
+        digestType === undefined ||
+        digest === undefined
+    ) {
+        return null;
+    }
+
+    return {
+        key_tag: String(keyTag),
+        algorithm: String(algorithm),
+        digest_type: String(digestType),
+        digest: String(digest).replace(/\s+/g, '').toUpperCase()
+    };
+}
+
+function dsRecordKey(record) {
+    const ds = normalizeDsRecord(record);
+    if (!ds) return null;
+
+    return [
+        ds.key_tag,
+        ds.algorithm,
+        ds.digest_type,
+        ds.digest
+    ].join('|');
+}
+
+function syncDnssecIntegration() {
+    if (!linkedDnssecState || registryDnssecRecords === null) return;
+
+    const notice = document.getElementById('dnssec-provider-notice');
+    const submit = document.getElementById('dnssec-submit');
+    const confirmLabel = document.getElementById('dnssec-confirm-label');
+
+    if (!notice || !submit) return;
+
+    notice.className = 'alert d-none mb-4';
+    notice.textContent = '';
+
+    submit.textContent = "{{ 'Add DNSSEC Record'|trans|e('js') }}";
+
+    confirmLabel.textContent =
+        "{{ 'I confirm these DS records are correct for this domain.'|trans|e('js') }}";
+
+    const providerRecords = Array.isArray(linkedDnssecState.ds)
+        ? linkedDnssecState.ds.map(normalizeDsRecord).filter(Boolean)
+        : [];
+
+    const registryRecords = registryDnssecRecords
+        .map(normalizeDsRecord)
+        .filter(Boolean);
+
+    const providerEnabled = !!linkedDnssecState.enabled;
+
+    const providerKeys = providerRecords.map(dsRecordKey);
+    const registryKeys = registryRecords.map(dsRecordKey);
+
+    const recordsMatch =
+        providerKeys.length === registryKeys.length &&
+        providerKeys.every((key) => registryKeys.includes(key));
+
+    if (providerEnabled && providerRecords.length && registryRecords.length === 0) {
+        notice.className = 'alert alert-info mb-4';
+        notice.textContent =
+            "{{ 'DNSSEC is enabled at your DNS service, but no DS record is published at the registry.'|trans|e('js') }}";
+
+        confirmLabel.textContent =
+            "{{ 'I confirm publishing these DS records to the registry.'|trans|e('js') }}";
+
+        const ds = providerRecords[0];
+
+        document.getElementById('dnssec-key-tag').value = ds.key_tag;
+        document.getElementById('dnssec-algorithm').value = ds.algorithm;
+        document.getElementById('dnssec-digest-type').value = ds.digest_type;
+        document.getElementById('dnssec-digest').value = ds.digest;
+
+        submit.textContent =
+            "{{ 'Publish to registry'|trans|e('js') }}";
+
+        return;
+    }
+
+    if (!providerEnabled && registryRecords.length) {
+        notice.className = 'alert alert-warning mb-4';
+        notice.textContent =
+            "{{ 'DS records are published at the registry, but DNSSEC is disabled at your DNS service. This may cause DNS validation failures.'|trans|e('js') }}";
+        return;
+    }
+
+    if (providerEnabled && !providerRecords.length) {
+        notice.className = 'alert alert-warning mb-4';
+        notice.textContent =
+            "{{ 'DNSSEC is enabled at your DNS service, but no DS records were returned.'|trans|e('js') }}";
+        return;
+    }
+
+    if (
+        providerEnabled &&
+        providerRecords.length &&
+        registryRecords.length &&
+        !recordsMatch
+    ) {
+        notice.className = 'alert alert-warning mb-4';
+        notice.textContent =
+            "{{ 'The DNS service and registry DS records do not match. Review them before making changes.'|trans|e('js') }}";
+    }
+}
+
 function formatLinkedDsRecord(record) {
     if (typeof record === 'string') {
         return record;
@@ -776,15 +913,7 @@ function loadLinkedDnssec() {
                 return;
             }
 
-            const badge = document.getElementById('linked-dnssec-status');
-
-            badge.textContent = result.enabled
-                ? "{{ 'Enabled'|trans|e('js') }}"
-                : "{{ 'Disabled'|trans|e('js') }}";
-
-            badge.className = result.enabled
-                ? 'badge bg-green-lt text-green'
-                : 'badge bg-red-lt text-red';
+            linkedDnssecState = result;
 
             document.getElementById('linked-dnssec-item').style.display = '';
 
@@ -797,6 +926,7 @@ function loadLinkedDnssec() {
 
             if (!result.enabled || !records.length) {
                 section.classList.add('d-none');
+                syncDnssecIntegration();
                 return;
             }
 
@@ -825,6 +955,7 @@ function loadLinkedDnssec() {
             });
 
             section.classList.remove('d-none');
+            syncDnssecIntegration();
         }
     );
 }
@@ -1036,7 +1167,6 @@ document.addEventListener("DOMContentLoaded", function () {
             ? feature.records
             : [];
 
-        {% if not dns_order %}
         const dnssecEnabled = records.length > 0;
         const badge = document.getElementById('linked-dnssec-status');
 
@@ -1049,6 +1179,10 @@ document.addEventListener("DOMContentLoaded", function () {
             : 'badge bg-red-lt text-red';
 
         document.getElementById('linked-dnssec-item').style.display = '';
+
+        {% if dns_order %}
+        registryDnssecRecords = records;
+        syncDnssecIntegration();
         {% endif %}
 
         const maxRecords = Number(feature.max_records || 2);
