@@ -263,20 +263,20 @@
                   <input type="hidden" name="order_id" value="{{ order.id }}">
 
                   <div class="form-group row mb-2">
-                    <label for="dnssec-key-tag" class="col-md-4 col-form-label required">
+                    <label for="dnssec-key-tag" class="col-md-4 col-form-label col-form-label-sm required">
                       {{ 'Key Tag'|trans }}
                     </label>
                     <div class="col-md-6">
-                      <input class="form-control" type="number" name="key_tag" id="dnssec-key-tag" min="0" max="65535" step="1" placeholder="33409" required>
+                      <input class="form-control form-control-sm" type="number" name="key_tag" id="dnssec-key-tag" min="0" max="65535" step="1" placeholder="33409" required>
                     </div>
                   </div>
 
                   <div class="form-group row mb-2">
-                    <label for="dnssec-algorithm" class="col-md-4 col-form-label required">
+                    <label for="dnssec-algorithm" class="col-md-4 col-form-label col-form-label-sm required">
                       {{ 'Algorithm'|trans }}
                     </label>
                     <div class="col-md-6">
-                      <select name="algorithm" id="dnssec-algorithm" class="form-control form-select" required>
+                      <select name="algorithm" id="dnssec-algorithm" class="form-control form-select form-select-sm" required>
                         <option value="8">8: RSA/SHA-256</option>
                         <option value="13">13: ECDSA Curve P-256 with SHA-256</option>
                         <option value="14">14: ECDSA Curve P-384 with SHA-384</option>
@@ -287,11 +287,11 @@
                   </div>
 
                   <div class="form-group row mb-2">
-                    <label for="dnssec-digest-type" class="col-md-4 col-form-label required">
+                    <label for="dnssec-digest-type" class="col-md-4 col-form-label col-form-label-sm required">
                       {{ 'Digest Type'|trans }}
                     </label>
                     <div class="col-md-6">
-                      <select name="digest_type" id="dnssec-digest-type" class="form-control form-select" required>
+                      <select name="digest_type" id="dnssec-digest-type" class="form-control form-select form-select-sm" required>
                         <option value="2">2: SHA-256</option>
                         <option value="4">4: SHA-384</option>
                       </select>
@@ -299,22 +299,22 @@
                   </div>
 
                   <div class="form-group row mb-2">
-                    <label for="dnssec-digest" class="col-md-4 col-form-label required">
+                    <label for="dnssec-digest" class="col-md-4 col-form-label col-form-label-sm required">
                       {{ 'Digest'|trans }}
                     </label>
                     <div class="col-md-6">
-                      <input class="form-control font-monospace" type="text" name="digest" id="dnssec-digest" minlength="40" maxlength="128" pattern="[0-9A-Fa-f]{40,128}" autocomplete="off" spellcheck="false" required>
+                      <input class="form-control form-control-sm font-monospace" type="text" name="digest" id="dnssec-digest" minlength="40" maxlength="128" pattern="[0-9A-Fa-f]{40,128}" autocomplete="off" spellcheck="false" required>
                     </div>
                   </div>
 
-                  <div class="form-check mt-4">
+                  <div class="form-check mt-3">
                     <input class="form-check-input" type="checkbox" id="dnssec-confirm" required>
                     <label class="form-check-label" for="dnssec-confirm" id="dnssec-confirm-label">
                       {{ 'I confirm that these DS values match the DNSSEC key published by the authoritative DNS provider.'|trans }}
                     </label>
                   </div>
 
-                  <div class="d-flex justify-content-end mt-4">
+                  <div class="d-flex justify-content-end mt-3">
                     <button type="submit" class="btn btn-primary" id="dnssec-submit">
                       {{ 'Add DS Record'|trans }}
                     </button>
@@ -626,7 +626,7 @@ function resetEppUI() {
 
 function scheduleEppHide() {
     if (eppHideTimer) clearTimeout(eppHideTimer);
-    eppHideTimer = setTimeout(resetEppUI, 30000); // 30 sec
+    eppHideTimer = setTimeout(resetEppUI, 5000);
 }
 
 function setLockBadge(isLocked) {
@@ -946,7 +946,23 @@ function loadLinkedDnssec() {
                 button.textContent = "{{ 'Copy'|trans|e('js') }}";
 
                 button.addEventListener('click', () => {
-                    navigator.clipboard.writeText(value);
+                    navigator.clipboard.writeText(value)
+                        .then(() => {
+                            FOSSBilling.message(
+                                "{{ 'DS record copied to clipboard.'|trans|e('js') }}"
+                            );
+
+                            button.textContent = "{{ 'Copied'|trans|e('js') }}";
+
+                            setTimeout(() => {
+                                button.textContent = "{{ 'Copy'|trans|e('js') }}";
+                            }, 1500);
+                        })
+                        .catch(() => {
+                            FOSSBilling.message(
+                                "{{ 'Could not copy DS record.'|trans|e('js') }}"
+                            );
+                        });
                 });
 
                 row.appendChild(code);
