@@ -12,6 +12,8 @@
 {% block meta_title %}
     {% if order.service_type == 'domain' and service.domain is defined %}
         {{ service.domain }}
+    {% elseif order.service_type == 'hosting' and service.domain is defined %}
+        {{ 'Hosting'|trans }}: {{ service.domain }}
     {% else %}
         {{ order.title }}
     {% endif %}
@@ -23,6 +25,8 @@
 <li class="breadcrumb-item active" aria-current="page">
     {% if order.service_type == 'domain' and service.domain is defined %}
         {{ service.domain }}
+    {% elseif order.service_type == 'hosting' and service.domain is defined %}
+        {{ 'Hosting'|trans }}: {{ service.domain }}
     {% else %}
         {{ order.title }}
     {% endif %}
@@ -39,7 +43,7 @@
 {% block content %}
     {{ render_widgets('client.order.manage.content.start', { 'order': order }) }}
 
-    {% if order.service_type not in ['domain', 'dns']
+    {% if order.service_type not in ['domain', 'dns', 'hosting']
        or order.status not in ['active', 'suspended'] %}
     <div class="row">
         <div class="col-md-12">
@@ -299,7 +303,7 @@
 {% endblock %}
 {% block js %}
 {% autoescape "js" %}
-    {% if order.service_type not in ['domain', 'dns']
+    {% if order.service_type not in ['domain', 'dns', 'hosting']
        or order.status not in ['active', 'suspended'] %}
     <script>
         document.addEventListener("DOMContentLoaded", function() {
