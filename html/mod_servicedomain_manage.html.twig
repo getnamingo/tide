@@ -36,9 +36,7 @@
       <div class="card-header py-3">
         <div class="d-flex justify-content-between align-items-start gap-2 flex-nowrap w-100">
           <div class="flex-fill">
-            <h1 class="mb-1">
-              {{ service.domain }} {{ mf.status_badge(order.status, 'order') }}
-            </h1>
+            <h1 class="mb-1">{{ service.domain }}</h1>
             {% if order.period and order.expires_at %}
               {% set days_left = order.expires_at|daysleft %}
               {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'primary') %}
@@ -79,11 +77,6 @@
       <div class="card-body">
         <div class="datagrid mb-4">
           <div class="datagrid-item">
-            <div class="datagrid-title">{{ 'Order Created'|trans }}</div>
-            <div class="datagrid-content">{{ order.created_at|date('Y-m-d H:i:s') }}</div>
-          </div>
-
-          <div class="datagrid-item">
             <div class="datagrid-title">{{ 'Registered on'|trans }}</div>
             <div class="datagrid-content">{{ service.registered_at|date('Y-m-d H:i:s') }}</div>
           </div>
@@ -92,6 +85,22 @@
             <div class="datagrid-title">{{ 'Expires on'|trans }}</div>
             <div class="datagrid-content">{{ service.expires_at|date('Y-m-d H:i:s') }}</div>
           </div>
+
+          <div class="datagrid-item">
+            <div class="datagrid-title">{{ 'Status'|trans }}</div>
+            <div class="datagrid-content">
+              {{ mf.status_badge(order.status, 'order') }}
+            </div>
+          </div>
+
+          {% if dns_order or domainx_enabled %}
+          <div class="datagrid-item" id="linked-dnssec-item" style="display:none;">
+            <div class="datagrid-title">{{ 'DNSSEC'|trans }}</div>
+            <div class="datagrid-content">
+              <span id="linked-dnssec-status" class="badge"></span>
+            </div>
+          </div>
+          {% endif %}
         </div>
 
         <div class="row row-cards mb-4">
@@ -217,7 +226,7 @@
                 <div class="d-flex flex-column">
                   <h3 class="card-title mb-1">{{ 'DNSSEC DS Records'|trans }}</h3>
                   <div class="text-muted small">
-                    {{ 'Current DS records are read directly from the domain registry.'|trans }}
+                    {{ 'Current DS records from the registry.'|trans }}
                   </div>
                 </div>
               </div>
@@ -321,8 +330,6 @@
                       {{ 'Manage DNS records for this domain.'|trans }}
                     </div>
                   </div>
-
-                  <span id="linked-dnssec-status" class="badge d-none"></span>
                 </div>
               </div>
 
@@ -336,7 +343,9 @@
                   <div id="linked-dnssec-ds"></div>
                 </div>
 
-                <a class="btn btn-outline-primary btn-sm w-100" href='{{ "order/service/manage/#{dns_order.id}"|url }}'>{{ 'Manage DNS'|trans }}</a>
+                <div class="d-flex justify-content-end mt-4">
+                  <a class="btn btn-primary" href='{{ "order/service/manage/#{dns_order.id}"|url }}'>{{ 'Manage DNS'|trans }}</a>
+                </div>
               </div>
             </div>
             {% endif %}
@@ -770,12 +779,14 @@ function loadLinkedDnssec() {
             const badge = document.getElementById('linked-dnssec-status');
 
             badge.textContent = result.enabled
-                ? "{{ 'DNSSEC Enabled'|trans|e('js') }}"
-                : "{{ 'DNSSEC Disabled'|trans|e('js') }}";
+                ? "{{ 'Enabled'|trans|e('js') }}"
+                : "{{ 'Disabled'|trans|e('js') }}";
 
             badge.className = result.enabled
                 ? 'badge bg-green-lt text-green'
                 : 'badge bg-red-lt text-red';
+
+            document.getElementById('linked-dnssec-item').style.display = '';
 
             const section = document.getElementById('linked-dnssec-ds-section');
             const container = document.getElementById('linked-dnssec-ds');
@@ -1024,6 +1035,21 @@ document.addEventListener("DOMContentLoaded", function () {
         const records = Array.isArray(feature.records)
             ? feature.records
             : [];
+
+        {% if not dns_order %}
+        const dnssecEnabled = records.length > 0;
+        const badge = document.getElementById('linked-dnssec-status');
+
+        badge.textContent = dnssecEnabled
+            ? "{{ 'Enabled'|trans|e('js') }}"
+            : "{{ 'Disabled'|trans|e('js') }}";
+
+        badge.className = dnssecEnabled
+            ? 'badge bg-green-lt text-green'
+            : 'badge bg-red-lt text-red';
+
+        document.getElementById('linked-dnssec-item').style.display = '';
+        {% endif %}
 
         const maxRecords = Number(feature.max_records || 2);
 
