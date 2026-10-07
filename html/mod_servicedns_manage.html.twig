@@ -1,0 +1,417 @@
+{% if order.status == 'active' %}
+{% set nameservers = guest.servicedns_nameservers({product_id: order.product_id})|default([]) %}
+<div class="card border-0 shadow-none">
+    <div class="card-header py-3">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-nowrap w-100">
+          <div class="flex-fill">
+            <h1 class="mb-1">{{ order.title }}</h1>
+            {% if order.period and order.expires_at %}
+              {% set days_left = order.expires_at|daysleft %}
+              {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'primary') %}
+              <div class="d-flex align-items-center gap-2 small text-secondary">
+                <span>
+                  {{ 'Renews on'|trans }}
+                  <strong>{{ order.expires_at|date('Y-m-d') }}</strong>
+                  {{ 'for'|trans }}
+                  <strong>{{ order.total|format_currency(order.currency ?? default_currency) }}</strong>
+                </span>
+                <span class="badge d-none d-sm-inline bg-{{ renewal_color }}-lt text-{{ renewal_color }}">
+                  {{ days_left }} {{ 'days left'|trans }}
+                </span>
+              </div>
+            {% else %}
+              <span class="small text-secondary">{{ 'Domain registration details'|trans }}</span>
+            {% endif %}
+          </div>
+
+          {% if order.period and order.status != 'failed_renew' %}
+            <div class="ms-auto flex-shrink-0 align-self-center">
+              <a class="btn btn-outline btn-{{ renewal_color }} px-2 px-sm-3 text-nowrap"
+                 {{ fb_api_link({
+                   href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}),
+                   modal: {
+                     type: 'confirm',
+                     title: 'Are you sure?'|trans,
+                     content: 'This will generate new invoice. Are you sure you want to continue?'|trans
+                   },
+                   callback: 'onRenewalInvoiceCreated'
+                 }) }}>
+                {{ 'Renew Now'|trans }}
+              </a>
+            </div>
+          {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <h3>{{ 'DNS Record Management'|trans }}</h3>
+
+        <form class="mb-4 api-form" action="{{ 'servicedns/add'|api_url(role='client') }}" {{ fb_api_form({ callback: 'dnsRecordAdded' }) }}>
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <select class="form-select" name="record_type" required>
+                        <option value="" disabled selected>Select Type</option>
+                        <option value="A">A</option>
+                        <option value="AAAA">AAAA</option>
+                        <option value="CNAME">CNAME</option>
+                        <option value="MX">MX</option>
+                        <option value="TXT">TXT</option>
+                        <option value="SPF">SPF</option>
+                        <option value="DS">DS</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" placeholder="www or @" name="record_name">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="127.0.0.1" name="record_value" required>
+                </div>
+                <div class="col-auto" style="max-width: 100px;">
+                    <input type="number" class="form-control" placeholder="TTL" min="1" max="2147483647" name="record_ttl" value="3600" required>
+                </div>
+                <div class="col-auto" style="max-width: 150px;">
+                    <input type="number" class="form-control" placeholder="MX priority" min="0" max="65535" name="record_priority">
+                </div>
+                <div class="col-md-auto">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <button class="btn btn-outline-success btn-icon" type="submit" title="{{ 'Add Record'|trans }}"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg></button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered text-nowrap table-vcenter">
+                <thead>
+                    <tr>
+                        <th scope="col" class="w-25">Name</th>
+                        <th scope="col" class="w-1">Type</th>
+                        <th scope="col" class="w-15">TTL</th>
+                        <th scope="col" class="w-50">Value</th>
+                        <th scope="col" class="w-1">Actions</th>
+                    </tr>
+                </thead>
+                    <tbody id="recordsTableBody">
+                        {% for record in service.records|default([]) %}
+                            {% set record_form_id = 'dns-record-' ~ record.id %}
+                            <tr>
+                                <td><strong>{{ record.host|default('@') }}</strong></td>
+                                <td>{% set dns_type = record.type|upper %}
+                                <span class="badge 
+                                {% if dns_type == 'A' %}bg-blue-lt
+                                {% elseif dns_type == 'AAAA' %}bg-indigo-lt
+                                {% elseif dns_type == 'CNAME' %}bg-green-lt
+                                {% elseif dns_type == 'MX' %}bg-orange-lt
+                                {% elseif dns_type == 'TXT' %}bg-teal-lt
+                                {% elseif dns_type == 'SPF' %}bg-red-lt
+                                {% elseif dns_type == 'DS' %}bg-purple-lt
+                                {% else %}bg-default
+                                {% endif %}">{{ dns_type }}</span></td>
+                                <td><input type="number" min="1" max="2147483647" class="form-control" placeholder="600" name="record_ttl" value="{{ record.ttl }}" form="{{ record_form_id }}" style="min-width:100px;" required></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if record.type|upper == 'MX' %}
+                                            <span class="badge bg-dark-lt">{{ record.priority }}</span>
+                                        {% endif %}
+
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            placeholder="127.0.0.1"
+                                            name="record_value"
+                                            value="{{ record.value }}"
+                                            form="{{ record_form_id }}"
+                                            style="min-width:200px;"
+                                            required
+                                        >
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <form id="{{ record_form_id }}" class="d-inline-flex gap-1" action="{{ 'servicedns/update'|api_url(role='client') }}" {{ fb_api_form({ callback: 'dnsRecordUpdated' }) }}>
+                                        <input type="hidden" name="record_id" value="{{ record.id }}"/>
+                                        <input type="hidden" name="record_type" value="{{ record.type }}"/>
+                                        <input type="hidden" name="record_name" value="{{ record.host }}"/>
+                                        <input type="hidden" name="old_value" value="{{ record.value }}"/>
+                                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                                        {% if record.type|upper == 'MX' %}<input type="hidden" name="record_priority" value="{{ record.priority }}">{% endif %}
+                                        <button type="submit" class="btn btn-outline-info btn-icon" name="action" value="update" title="Update Record">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-icon" title="Delete Record" onclick="confirmDelete(event, this.form)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No DNS records found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+            </table>
+        </div>
+
+        <h3 class="mt-4">{{ 'Zone Settings'|trans }}</h3>
+
+        <div class="row g-3">
+
+            <div class="col-12 col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0 d-flex align-items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-2" /><path d="M3 15a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -2" /><path d="M7 8l0 .01" /><path d="M7 16l0 .01" /></svg>
+                            {{ 'Nameservers'|trans }}
+                        </h4>
+                    </div>
+
+                    <div class="card-body">
+                        <p class="text-secondary">
+                            {{ 'Set these nameservers at your domain registrar:'|trans }}
+                        </p>
+
+                        {% for nameserver in nameservers %}
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <code class="text-body">{{ nameserver }}</code>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary btn-icon"
+                                    title="{{ 'Copy'|trans }}"
+                                    onclick="copyDnsValue('{{ nameserver|e('js') }}')"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></svg>
+                                </button>
+                            </div>
+                        {% else %}
+                            <span class="text-secondary">{{ 'No nameservers configured.'|trans }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# DNSSEC #}
+            <div class="col-12 col-md-6">
+                <div id="dnssec-card" class="card h-100 d-none">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <h4 class="card-title mb-0 d-flex align-items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /></svg>
+                                {{ 'DNSSEC'|trans }}
+                            </h4>
+
+                            <span id="dnssec-status" class="badge bg-secondary-lt"></span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="dnssec-enforced" class="text-secondary mb-3 d-none">
+                            {{ 'DNSSEC is automatically managed by this DNS provider.'|trans }}
+                        </div>
+
+                        <div id="dnssec-ds-section" class="d-none">
+                            <p class="text-secondary mb-2">
+                                {{ 'Publish these DS records at your domain registrar:'|trans }}
+                            </p>
+
+                            <div id="dnssec-ds"></div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button
+                                id="dnssec-enable"
+                                type="button"
+                                class="btn btn-outline-success d-none"
+                                onclick="enableDnssec()"
+                            >
+                                {{ 'Enable DNSSEC'|trans }}
+                            </button>
+
+                            <button
+                                id="dnssec-disable"
+                                type="button"
+                                class="btn btn-outline-danger d-none"
+                                onclick="disableDnssec()"
+                            >
+                                {{ 'Disable DNSSEC'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function dnsFlash(message) {
+    sessionStorage.setItem('dns-flash-message', message);
+    window.location.reload();
+}
+
+function dnsRecordAdded() {
+    dnsFlash('{{ 'DNS record added successfully'|trans|e('js') }}');
+}
+
+function dnsRecordUpdated() {
+    dnsFlash('{{ 'DNS record updated successfully'|trans|e('js') }}');
+}
+
+function confirmDelete(event, form) {
+    event.preventDefault();
+
+    if (confirm("{{ 'Are you sure you want to delete this record?'|trans|e('js') }}")) {
+        FOSSBilling.api.client.post(
+            'servicedns/del',
+            new FormData(form),
+            () => dnsFlash('{{ 'DNS record deleted successfully'|trans|e('js') }}')
+        );
+    }
+}
+
+function formatDsRecord(record) {
+    if (typeof record === 'string') {
+        return record;
+    }
+
+    if (record && typeof record === 'object') {
+        const keyTag = record.key_tag ?? record.keytag ?? record.keyTag;
+        const algorithm = record.algorithm;
+        const digestType = record.digest_type ?? record.digestType;
+        const digest = record.digest;
+
+        if (
+            keyTag !== undefined &&
+            algorithm !== undefined &&
+            digestType !== undefined &&
+            digest !== undefined
+        ) {
+            return `${keyTag} ${algorithm} ${digestType} ${digest}`;
+        }
+
+        return JSON.stringify(record);
+    }
+
+    return String(record);
+}
+
+function loadDnssec(retries = 10) {
+    FOSSBilling.api.client.post(
+        'servicedns/dnssec',
+        { order_id: {{ order.id }} },
+        function (result) {
+            if (!result || !result.supported) {
+                return;
+            }
+
+            document.getElementById('dnssec-card').classList.remove('d-none');
+
+            const status = document.getElementById('dnssec-status');
+
+            status.textContent = result.enabled
+                ? '{{ 'Enabled'|trans|e('js') }}'
+                : '{{ 'Disabled'|trans|e('js') }}';
+
+            status.className = result.enabled
+                ? 'badge bg-green-lt'
+                : 'badge bg-red-lt';
+
+            document.getElementById('dnssec-enable').classList.toggle(
+                'd-none',
+                result.enabled || !result.can_enable
+            );
+
+            document.getElementById('dnssec-disable').classList.toggle(
+                'd-none',
+                !result.enabled || !result.can_disable
+            );
+
+            document.getElementById('dnssec-enforced').classList.toggle(
+                'd-none',
+                !result.enforced
+            );
+
+            const dsSection = document.getElementById('dnssec-ds-section');
+            const dsContainer = document.getElementById('dnssec-ds');
+
+            dsContainer.innerHTML = '';
+
+            if (result.ds && result.ds.length) {
+                result.ds.forEach(function (record) {
+                    const value = formatDsRecord(record);
+
+                    const div = document.createElement('div');
+                    div.className = 'd-flex align-items-center justify-content-between gap-2 mb-2';
+
+                    const code = document.createElement('code');
+                    code.className = 'text-body text-break';
+                    code.textContent = value;
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-secondary btn-icon';
+                    button.title = '{{ 'Copy'|trans|e('js') }}';
+                    button.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></svg>
+                    `;
+                    button.addEventListener('click', () => copyDnsValue(value));
+
+                    div.appendChild(code);
+                    div.appendChild(button);
+                    dsContainer.appendChild(div);
+                });
+
+                dsSection.classList.remove('d-none');
+            } else {
+                dsSection.classList.add('d-none');
+
+                if (result.enabled && retries > 0) {
+                    setTimeout(() => loadDnssec(retries - 1), 3000);
+                }
+            }
+        }
+    );
+}
+
+function enableDnssec() {
+    FOSSBilling.api.client.post(
+        'servicedns/dnssec_enable',
+        { order_id: {{ order.id }} },
+        () => dnsFlash('{{ 'DNSSEC enabled successfully'|trans|e('js') }}')
+    );
+}
+
+function disableDnssec() {
+    if (!confirm(
+        "{{ 'Remove the DS record from your registrar before disabling DNSSEC, otherwise the domain may stop resolving. Continue?'|trans|e('js') }}"
+    )) {
+        return;
+    }
+
+    FOSSBilling.api.client.post(
+        'servicedns/dnssec_disable',
+        { order_id: {{ order.id }} },
+        () => dnsFlash('{{ 'DNSSEC disabled successfully'|trans|e('js') }}')
+    );
+}
+
+function copyDnsValue(value) {
+    navigator.clipboard.writeText(value).then(function () {
+        FOSSBilling.ui.notify(
+            '{{ 'Copied to clipboard'|trans|e('js') }}',
+            'success'
+        );
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const message = sessionStorage.getItem('dns-flash-message');
+
+    if (message) {
+        sessionStorage.removeItem('dns-flash-message');
+        FOSSBilling.ui.notify(message, 'success');
+    }
+
+    loadDnssec();
+});
+</script>
+{% endif %}

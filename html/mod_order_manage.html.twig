@@ -39,7 +39,8 @@
 {% block content %}
     {{ render_widgets('client.order.manage.content.start', { 'order': order }) }}
 
-    {% if order.service_type != 'domain' %}
+    {% if order.service_type not in ['domain', 'dns']
+       or order.status not in ['active', 'suspended'] %}
     <div class="row">
         <div class="col-md-12">
             {# Order info #}
@@ -298,7 +299,8 @@
 {% endblock %}
 {% block js %}
 {% autoescape "js" %}
-    {% if order.service_type != 'domain' %}
+    {% if order.service_type not in ['domain', 'dns']
+       or order.status not in ['active', 'suspended'] %}
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const cancelRequestForm = document.getElementById('cancel-request-form');
