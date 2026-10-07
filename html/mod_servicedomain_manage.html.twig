@@ -32,7 +32,7 @@
     }
     </style>
 
-    <div class="card mb-4">
+    <div class="card border-0 shadow-none">
       <div class="card-header py-3">
         <div class="d-flex justify-content-between align-items-start gap-2 flex-nowrap w-100">
           <div class="flex-fill">
@@ -96,7 +96,7 @@
 
         <div class="row row-cards mb-4">
           <div class="col-12 col-lg-6 mb-3 mb-lg-0">
-            <div class="btn-list mb-1 d-none" id="domain-settings-switcher">
+            <div class="btn-group mb-2 d-none" id="domain-settings-switcher" role="group">
               <button type="button" class="btn btn-secondary btn-sm" data-domain-panel="nameservers">{{ 'Nameservers'|trans }}</button>
 
               {% if domainx_enabled %}
@@ -115,7 +115,7 @@
                 <div class="d-flex flex-column">
                   <h3 class="card-title mb-1">{{ 'Nameservers'|trans }}</h3>
                   <div class="text-muted small">
-                    {{ 'If you would like to host this domain with another company you can update nameservers.'|trans }}
+                    {{ 'Update nameservers to point this domain to another provider.'|trans }}
                   </div>
                 </div>
               </div>
@@ -165,9 +165,9 @@
               </div>
               <div class="card-body">
                 <div class="btn-group mb-4" role="group" aria-label="{{ 'Glue hostname action'|trans }}">
-                  <button class="btn btn-primary btn-sm" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
-                  <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
-                  <button class="btn btn-outline-primary btn-sm" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
+                  <button class="btn btn-secondary btn-sm" type="button" data-glue-action="create" aria-pressed="true">{{ 'Create'|trans }}</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-glue-action="update" aria-pressed="false">{{ 'Update'|trans }}</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-glue-action="delete" aria-pressed="false">{{ 'Delete'|trans }}</button>
                 </div>
 
                 <form id="glue-form">
@@ -406,7 +406,7 @@
                     <div class="col-md-12">
                       <label for="whois_address1" class="form-label">{{ 'Address'|trans }}</label>
                       <input class="form-control" type="text" name="contact[address1]" id="whois_address1" value="{{ request.address1|default(service.contact.address1) }}" required>
-					  <input type="hidden" name="contact[address2]" value="{{ request.address2|default(service.contact.address2|default('')) }}">
+                      <input type="hidden" name="contact[address2]" value="{{ request.address2|default(service.contact.address2|default('')) }}">
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -879,8 +879,8 @@ document.addEventListener("DOMContentLoaded", function () {
         glueAction = action;
         glueActions.forEach((button) => {
             const selected = button.dataset.glueAction === action;
-            button.classList.toggle('btn-primary', selected);
-            button.classList.toggle('btn-outline-primary', !selected);
+            button.classList.toggle('btn-secondary', selected);
+            button.classList.toggle('btn-outline-secondary', !selected);
             button.setAttribute('aria-pressed', String(selected));
             if (selected) glueSubmit.textContent = button.textContent.trim();
         });
