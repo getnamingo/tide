@@ -3,10 +3,15 @@
 {% set transfer_tlds = guest.serviceDomain_tlds({ "allow_transfer": 1 })%}
 {% set cart_currency = guest.cart_get_currency %}
 {% set active_menu = 'order' %}
+{% set domainx_enabled = guest.extension_is_on({"mod": "domainx"}) %}
+{% if domainx_enabled %}
+{% set domainx_tlds = guest.serviceDomain_tlds({"allow_register": 1}) %}
+{% endif %}
 
 <style>
 @media (max-width: 767.98px) {
-  #domain-result-card.domain-result-unavailable .card-body > .row {
+  #domain-result-card.domain-result-unavailable .card-body > .row{% if domainx_enabled %},
+  .domainx-result-card.domain-result-unavailable .card-body > .row{% endif %} {
     min-height: 150px;
     align-content: center;
   }
@@ -48,6 +53,9 @@
         </div>
     </div>
 </div>
+{% if domainx_enabled %}
+<div id="domain-search-results" class="mt-3 d-none" aria-live="polite"></div>
+{% endif %}
 {% set currency = guest.cart_get_currency %}
 {% set sorted_tlds = pricing|keys|sort((a, b) => a <=> b) %}
 
@@ -403,6 +411,140 @@ document.addEventListener("DOMContentLoaded", () => {
         update();
     });
 
+    {% if domainx_enabled %}
+    const bulkResults = document.getElementById('domain-search-results');
+    const bulkTldPricing = new Map(JSON.parse('{{ domainx_tlds|json_encode|e('js') }}').map(function (tld) {
+        let suffix = '.' + String(tld.tld).trim().replace(/^\.+|\.+$/g, '').toLowerCase();
+        try { suffix = new URL('https://example' + suffix).hostname.slice(7); } catch (_) {}
+        return [suffix, tld];
+    }));
+    let domainxRequestId = 0;
+    let domainxSelectionId = 0;
+
+    function clearDomainxResults() {
+        ++domainxRequestId;
+        ++domainxSelectionId;
+        bulkResults.replaceChildren();
+        bulkResults.classList.add('d-none');
+        bulkResults.removeAttribute('aria-busy');
+        return domainxRequestId;
+    }
+
+    function createDomainxResult(result, requestId) {
+        // Reuse the existing full result layout, without duplicate IDs/form fields.
+        const card = document.getElementById('domain-result-card').cloneNode(true);
+        const find = id => card.querySelector('#' + id);
+        const name = find('domain-result-name');
+        const status = find('domain-result-status');
+        const icon = find('domain-result-icon');
+        const iconPath = find('domain-result-icon-path');
+        const period = find('domain-result-period');
+        const years = find('registration-years');
+        const priceWrap = find('domain-result-price-wrap');
+        const price = find('registration-price');
+        const renewal = find('registration-renewal');
+        const cartWrap = find('domain-result-cart-wrap');
+        const cart = find('config-next-domain');
+        const add = cart.querySelector('button');
+        find('domain-result-transfer-code').remove();
+        card.removeAttribute('id');
+        card.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        card.querySelectorAll('[name]').forEach(el => el.removeAttribute('name'));
+        card.classList.remove('d-none', 'mt-3', 'border-success', 'border-danger', 'domain-result-unavailable');
+        card.classList.add('domainx-result-card', 'mb-2');
+        card.setAttribute('data-domain-result', result.tld);
+        card.style.display = '';
+        card.style.opacity = '1';
+        card.style.transition = '';
+        name.textContent = result.domain;
+        name.classList.remove('text-truncate');
+        name.classList.add('text-break');
+
+        const available = result.available === true;
+        const unavailable = result.available === false;
+        card.classList.toggle('border-success', available);
+        card.classList.toggle('border-danger', unavailable);
+        card.classList.toggle('domain-result-unavailable', !available);
+        status.className = 'badge px-3 py-2 text-wrap ' + (available ? 'bg-success-lt text-success' : unavailable ? 'bg-danger-lt text-danger' : 'bg-secondary-lt text-secondary');
+        status.parentElement.classList.add('mw-100');
+        status.textContent = available
+            ? "{{ 'Available'|trans|e('js') }}"
+            : unavailable ? "{{ 'Unavailable'|trans|e('js') }}" : result.error || "{{ 'Check failed'|trans|e('js') }}";
+        icon.classList.remove('bg-success-lt', 'text-success', 'bg-danger-lt', 'text-danger');
+        icon.classList.add(available ? 'bg-success-lt' : unavailable ? 'bg-danger-lt' : 'bg-secondary-lt');
+        icon.classList.add(available ? 'text-success' : unavailable ? 'text-danger' : 'text-secondary');
+        iconPath.setAttribute('d', available ? 'M5 12l5 5l10 -10' : 'M18 6l-12 12m0 -12l12 12');
+        period.classList.toggle('d-none', !available);
+        priceWrap.classList.toggle('d-none', !available);
+        cartWrap.classList.toggle('d-none', !available);
+        years.replaceChildren();
+        years.disabled = true;
+        years.setAttribute('aria-label', result.domain + ' {{ 'Registration period'|trans|e('js') }}');
+        add.disabled = true;
+        hide(cart);
+        if (!available) return card;
+
+        const details = bulkTldPricing.get(result.tld);
+        const regPrice = Number(details?.price_registration);
+        const renewPrice = Number(details?.price_renew ?? regPrice);
+        if (!details || !Number.isFinite(regPrice) || !Number.isFinite(renewPrice)) {
+            price.textContent = "{{ 'Could not load pricing'|trans|e('js') }}";
+            renewal.textContent = '';
+            return card;
+        }
+        const conversionRate = Number('{{ cart_currency.conversion_rate|default(1) }}');
+        let allowedYears = Array.isArray(details.periods) && details.periods.length
+            ? details.periods.map(Number).filter(year => Number.isInteger(year) && year > 0)
+            : null;
+        if (!allowedYears) {
+            const minYears = Number(details.min_years) > 0 ? Number(details.min_years) : 1;
+            allowedYears = Array.from({ length: 5 }, (_, index) => minYears + index);
+        }
+        allowedYears.forEach(function (year) {
+            const label = year === 1 ? `${year} {{ 'year'|trans|e('js') }}` : `${year} {{ 'years'|trans|e('js') }}`;
+            const option = new Option(label, String(year));
+            option.dataset.price = formatMoney((regPrice + (year - 1) * renewPrice) * conversionRate);
+            years.appendChild(option);
+        });
+        if (!years.options.length) {
+            price.textContent = "{{ 'Could not load pricing'|trans|e('js') }}";
+            renewal.textContent = '';
+            return card;
+        }
+        years.selectedIndex = 0;
+        years.disabled = false;
+        const updatePrice = () => { price.textContent = years.options[years.selectedIndex].dataset.price; };
+        years.addEventListener('change', updatePrice);
+        updatePrice();
+        renewal.textContent = `{{ 'Renews at'|trans|e('js') }} ${formatMoney(renewPrice * conversionRate)}/{{ 'yr'|trans|e('js') }}`;
+        add.disabled = false;
+        show(cart);
+
+        // The normal submit button keeps the theme's existing cart/addon flow.
+        // Only the clicked row populates the named fields in the enclosing form.
+        add.addEventListener('click', function (event) {
+            if (requestId !== domainxRequestId || !years.value) {
+                event.preventDefault();
+                return;
+            }
+            document.querySelector('input[name="register_sld"]').value = result.sld;
+            document.querySelector('input[name="register_tld"]').value = result.tld;
+            document.querySelector('input[name="action"]').value = 'register';
+            const formYears = document.getElementById('registration-years');
+            formYears.replaceChildren(new Option(years.value, years.value, true, true));
+            formYears.disabled = false;
+            document.getElementById('domain-transfer-config').disabled = true;
+        });
+        years.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                add.click();
+            }
+        });
+        return card;
+    }
+    {% endif %}
+
     const transferCheck = document.getElementById('transfer-check');
     if (transferCheck) {
         transferCheck.addEventListener('click', function (e) {
@@ -419,6 +561,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             hide(document.getElementById('domain-result-card'));
             hide(document.getElementById('config-next-domain'));
+
+            {% if domainx_enabled %}
+            const requestId = clearDomainxResults();
+            {% endif %}
 
             const parts = domain.split('.');
             let sld = '';
@@ -444,6 +590,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 'servicedomain/can_be_transferred',
                 { sld: sld, tld: tld },
                 function (result) {
+                    {% if domainx_enabled %}
+                    if (requestId !== domainxRequestId) return;
+                    {% endif %}
                     hideTldPricingCard();
 
                     setDomainResult(
@@ -464,6 +613,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (orderBtn) orderBtn.style.display = '';
                 },
                 function () {
+                    {% if domainx_enabled %}
+                    if (requestId !== domainxRequestId) return;
+                    {% endif %}
                     hideTldPricingCard();
 
                     const statusText = "{{ 'Transfer unavailable'|trans }}";
@@ -485,6 +637,86 @@ document.addEventListener("DOMContentLoaded", () => {
             domainCheck.click();
         });
 
+        {% if domainx_enabled %}
+        domainCheck.addEventListener('click', function (e) {
+            e.preventDefault();
+            const domainInput = document.querySelector('input[name="domain_name"]');
+            if (!domainInput) return;
+            const domain = domainInput.value.trim().toLowerCase().replace(/\.$/, '');
+            if (!domain) {
+                FOSSBilling.message("{{ 'Please enter a domain name'|trans|e('js') }}");
+                return;
+            }
+
+            // The first label is the SLD; keep the entire suffix (e.g. .co.uk).
+            const dot = domain.indexOf('.');
+            const sld = dot === -1 ? domain : domain.slice(0, dot);
+            let requestedTld = dot === -1 ? '' : domain.slice(dot);
+            if (!sld || /[\s/\\?#:]/.test(domain)) {
+                FOSSBilling.message("{{ 'Please enter a valid domain name'|trans|e('js') }}");
+                return;
+            }
+            // Match an IDN suffix to the ASCII TLD returned by the bulk API.
+            if (requestedTld) {
+                try {
+                    requestedTld = new URL('https://example' + requestedTld).hostname.slice(7);
+                } catch (_) {
+                    FOSSBilling.message("{{ 'Please enter a valid domain name'|trans|e('js') }}");
+                    return;
+                }
+            }
+
+            const requestId = clearDomainxResults();
+            hide(document.getElementById('domain-result-card'));
+            hide(document.getElementById('config-next-domain'));
+            document.querySelector('input[name="register_sld"]').value = '';
+            document.querySelector('input[name="register_tld"]').value = '';
+            document.querySelector('input[name="action"]').value = '';
+            document.getElementById('registration-years').disabled = true;
+            document.getElementById('domain-transfer-config').disabled = true;
+            document.querySelectorAll('#register .order-button').forEach(hide);
+            hideTldPricingCard();
+            hide(document.getElementById('info-text'));
+            bulkResults.classList.remove('d-none');
+            bulkResults.setAttribute('aria-busy', 'true');
+            bulkResults.textContent = "{{ 'Checking...'|trans|e('js') }}";
+
+            FOSSBilling.api.guest.post(
+                'domainx/check_all',
+                { sld: sld },
+                function (data) {
+                    if (requestId !== domainxRequestId) return;
+                    bulkResults.replaceChildren();
+                    bulkResults.removeAttribute('aria-busy');
+                    const results = Array.isArray(data?.results) ? data.results.slice() : [];
+                    // Keep the requested suffix first, even when unavailable or unknown.
+                    if (requestedTld && !results.some(result => result.tld === requestedTld)) {
+                        results.unshift({
+                            sld: data?.sld || sld,
+                            tld: requestedTld,
+                            domain: (data?.sld || sld) + requestedTld,
+                            available: null,
+                            error: "{{ 'This TLD is not available for registration.'|trans|e('js') }}"
+                        });
+                    }
+                    results.sort((a, b) => Number(b.tld === requestedTld) - Number(a.tld === requestedTld));
+                    if (!results.length) {
+                        bulkResults.textContent = "{{ 'No TLDs are available for registration.'|trans|e('js') }}";
+                        return;
+                    }
+
+                    results.forEach(function (result) {
+                        bulkResults.appendChild(createDomainxResult(result, requestId));
+                    });
+                },
+                function (err) {
+                    if (requestId !== domainxRequestId) return;
+                    bulkResults.removeAttribute('aria-busy');
+                    bulkResults.textContent = String(err?.message || err?.error?.message || "{{ 'Domain check failed'|trans|e('js') }}");
+                }
+            );
+        });
+        {% else %}
         domainCheck.addEventListener('click', function (e) {
             e.preventDefault();
 
@@ -571,13 +803,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             );
         });
+        {% endif %}
     }
 
     function setPricing(tld) {
+        {% if domainx_enabled %}
+        const requestId = domainxRequestId;
+        const selectionId = domainxSelectionId;
+        {% endif %}
         FOSSBilling.api.guest.post(
             'servicedomain/pricing',
             { tld: tld },
             function (result) {
+                {% if domainx_enabled %}
+                if (requestId !== domainxRequestId || selectionId !== domainxSelectionId) return;
+                {% endif %}
                 const yearsSelect = document.getElementById('registration-years');
                 if (!yearsSelect) return;
 
@@ -646,18 +886,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 show(document.getElementById('config-next-domain'));
+                {% if domainx_enabled %}
+                yearsSelect.disabled = false;
+                const orderBtn = document.querySelector('#register .order-button');
+                if (orderBtn) orderBtn.style.display = '';
+                {% endif %}
             },
             function (err) {
+                {% if domainx_enabled %}
+                if (requestId !== domainxRequestId || selectionId !== domainxSelectionId) return;
+                document.getElementById('registration-price').textContent = "{{ 'Could not load pricing'|trans|e('js') }}";
+                {% endif %}
                 FOSSBilling.message(err?.message || "Could not load pricing");
             }
         );
     }
 
     function setTransferPricing(tld, domain) {
+        {% if domainx_enabled %}
+        const requestId = domainxRequestId;
+        const selectionId = domainxSelectionId;
+        {% endif %}
         FOSSBilling.api.guest.post(
             'servicedomain/pricing',
             { tld: tld },
             function (result) {
+                {% if domainx_enabled %}
+                if (requestId !== domainxRequestId || selectionId !== domainxSelectionId) return;
+                {% endif %}
                 const conversionRate = Number('{{ cart_currency.conversion_rate|default(1) }}');
 
                 const price = formatMoney(
@@ -678,6 +934,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 show(document.getElementById('config-next-domain'));
             },
             function (err) {
+                {% if domainx_enabled %}
+                if (requestId !== domainxRequestId || selectionId !== domainxSelectionId) return;
+                {% endif %}
                 const msg =
                   err?.message ||
                   err?.error?.message ||
