@@ -45,15 +45,15 @@
             <div class="card mb-4">
 
                 <div class="card-header py-3">
-                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 w-100">
+                    <div class="d-flex justify-content-between w-100 align-items-center">
                         <div>
-                            <h1 class="card-title mb-1">
+                            <h1 class="mb-1">
                                 {{ 'Invoices'|trans }}
                             </h1>
 
-                            <div class="text-muted">
+                            <span class="mt-1 small text-secondary">
                                 {{ 'View your invoices, payment status and due dates.'|trans }}
-                            </div>
+                            </span>
                         </div>
 
                         {% if unpaid_invoices.total %}
