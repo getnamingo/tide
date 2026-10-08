@@ -469,6 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
         card.removeAttribute('id');
         card.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
         card.querySelectorAll('[name]').forEach(el => el.removeAttribute('name'));
+        years.id = 'domainx-registration-years-' + requestId + '-' + bulkResults.childElementCount;
         card.classList.remove('d-none', 'mt-3', 'border-success', 'border-danger', 'domain-result-unavailable');
         card.classList.add('domainx-result-card', 'mb-2');
         card.setAttribute('data-domain-result', result.tld);
