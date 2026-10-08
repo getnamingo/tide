@@ -102,11 +102,6 @@
                autocomplete="off"
                required
                disabled>
-        <div class="form-hint"
-             id="transfer-code-hint"
-             style="display:none;">
-          {{ 'This TLD requires a transfer code (EPP/auth code) to proceed.'|trans }}
-        </div>
       </div>
 
       <div class="w-100 d-md-none"></div>
@@ -340,7 +335,6 @@ const transferCodeRequirements = {
 
 function updateTransferCodeRequirement(tld) {
     const input = document.getElementById('domain-transfer-config');
-    const hint = document.getElementById('transfer-code-hint');
 
     if (!input) return;
 
@@ -352,10 +346,6 @@ function updateTransferCodeRequirement(tld) {
         transferCodeRequirements[alternateKey] === true;
 
     input.required = true;
-
-    if (hint) {
-        hint.style.display = requiresTransferCode ? '' : 'none';
-    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -732,7 +722,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 function (err) {
                     if (requestId !== domainxRequestId) return;
                     bulkResults.removeAttribute('aria-busy');
-                    bulkResults.textContent = String(err?.message || err?.error?.message || "{{ 'Domain check failed'|trans|e('js') }}");
+                    if (!requestedTld) {
+                        bulkResults.textContent = "{{ 'Please enter a domain with a TLD'|trans|e('js') }}";
+                        return;
+                    }
+
+                    bulkResults.classList.add('d-none');
+                    document.querySelector('input[name="register_sld"]').value = sld;
+                    document.querySelector('input[name="register_tld"]').value = requestedTld;
+                    document.querySelector('input[name="action"]').value = 'register';
+
+                    FOSSBilling.api.guest.post('servicedomain/check',
+                        { sld: sld, tld: requestedTld },
+                        function () {
+                            if (requestId !== domainxRequestId) return;
+                            setDomainResult(domain, true);
+                            fadeIn(document.getElementById('domain-result-card'));
+                            setPricing(requestedTld);
+                        },
+                        function (error) {
+                            if (requestId !== domainxRequestId) return;
+                            const msg = String(error?.message || "{{ 'Domain check failed'|trans|e('js') }}");
+                            setDomainResult(domain, false,
+                                /^Domain is not available\b/i.test(msg)
+                                    ? "{{ 'Unavailable'|trans|e('js') }}" : msg);
+                            fadeIn(document.getElementById('domain-result-card'));
+                        }
+                    );
                 }
             );
         });

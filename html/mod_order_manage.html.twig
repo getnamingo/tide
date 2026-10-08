@@ -5,6 +5,8 @@
 {% if order.status == 'active' %}
     {% set service = client.order_service({ 'id': order.id }) %}
 {% endif %}
+{% set is_idn_domain = order.service_type == 'domain' and service.domain is defined
+    and (service.domain|lower starts with 'xn--' or '.xn--' in service.domain|lower) %}
 {% set addons = client.order_addons({ "id": order.id }) %}
 
 {% import "macro_functions.html.twig" as mf %}
@@ -22,9 +24,14 @@
 {% block body_class %}order-manage{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ 'order/service'|url}}">{{ 'Services'|trans }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">
+<li class="breadcrumb-item active" aria-current="page"{% if is_idn_domain %} data-managed-domain-idn{% endif %}>
     {% if order.service_type == 'domain' and service.domain is defined %}
-        {{ service.domain }}
+        {% if is_idn_domain %}
+            <bdi data-domain-unicode>{{ service.domain }}</bdi>
+            <small class="d-none text-secondary" style="font-size: 0.7rem;" dir="ltr" data-domain-ascii>({{ service.domain }})</small>
+        {% else %}
+            {{ service.domain }}
+        {% endif %}
     {% elseif order.service_type == 'hosting' and service.domain is defined %}
         {{ 'Hosting'|trans }}: {{ service.domain }}
     {% else %}
