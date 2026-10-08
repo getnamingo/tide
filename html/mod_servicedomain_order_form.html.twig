@@ -185,7 +185,9 @@
     </div>
 </div>
 
-<script>
+{% if domainx_enabled %}
+<script src="{{ 'libs/punycode/punycode.js' | asset_url }}"></script>
+{% endif %}<script>
 document.addEventListener("DOMContentLoaded", function () {
     const domain = sessionStorage.getItem("namingo_domain");
 
@@ -430,6 +432,23 @@ document.addEventListener("DOMContentLoaded", () => {
         return domainxRequestId;
     }
 
+    // Decode IDN labels for display only; API/cart values stay in ASCII form.
+    function domainxDisplayDomain(domain) {
+        const value = String(domain);
+        if (value.length > 253) return value;
+        return value.split('.').map(function (label) {
+            if (!/^xn--[a-z0-9-]+$/i.test(label) || label.length > 63) return label;
+            try {
+                const decoded = window.domainxPunycode.toUnicode(label.toLowerCase());
+                // Only display valid labels that round-trip to the original name.
+                if (new URL('https://' + decoded + '.example').hostname !== label.toLowerCase() + '.example') return label;
+                return decoded;
+            } catch (_) {
+                return label;
+            }
+        }).join('.');
+    }
+
     function createDomainxResult(result, requestId) {
         // Reuse the existing full result layout, without duplicate IDs/form fields.
         const card = document.getElementById('domain-result-card').cloneNode(true);
@@ -456,7 +475,8 @@ document.addEventListener("DOMContentLoaded", () => {
         card.style.display = '';
         card.style.opacity = '1';
         card.style.transition = '';
-        name.textContent = result.domain;
+        const displayDomain = domainxDisplayDomain(result.domain);
+        name.textContent = displayDomain;
         name.classList.remove('text-truncate');
         name.classList.add('text-break');
 
@@ -479,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cartWrap.classList.toggle('d-none', !available);
         years.replaceChildren();
         years.disabled = true;
-        years.setAttribute('aria-label', result.domain + ' {{ 'Registration period'|trans|e('js') }}');
+        years.setAttribute('aria-label', displayDomain + ' {{ 'Registration period'|trans|e('js') }}');
         add.disabled = true;
         hide(cart);
         if (!available) return card;
@@ -682,7 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             FOSSBilling.api.guest.post(
                 'domainx/check_all',
-                { sld: sld },
+                { sld: sld, tld: requestedTld },
                 function (data) {
                     if (requestId !== domainxRequestId) return;
                     bulkResults.replaceChildren();
