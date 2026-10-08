@@ -40,7 +40,7 @@
             <h1 class="mb-1"{% if is_idn_domain %} data-managed-domain-idn{% endif %}>
               {% if is_idn_domain %}
                 <bdi data-domain-unicode>{{ service.domain }}</bdi>
-                <small class="d-none text-secondary fw-normal" style="font-size: 0.7rem;" dir="ltr" data-domain-ascii>{{ service.domain }}</small>
+                <small class="d-none text-secondary fw-normal" style="font-size: 0.7rem;" dir="ltr" data-domain-ascii>({{ service.domain }})</small>
               {% else %}
                 {{ service.domain }}
               {% endif %}
