@@ -1,6 +1,7 @@
 {% import "macro_functions.html.twig" as mf %}
 
 {% if order.status == 'active' or order.status == 'failed_renew' %}
+    {% set is_idn_domain = service.domain|lower starts with 'xn--' or '.xn--' in service.domain|lower %}
     {% set domainx_enabled = guest.extension_is_on({"mod":"domainx"}) %}
     {% set servicedns_enabled = guest.extension_is_on({"mod":"servicedns"}) %}
     {% set dns_order = null %}
@@ -36,7 +37,14 @@
       <div class="card-header py-3">
         <div class="d-flex justify-content-between align-items-start gap-2 flex-nowrap w-100">
           <div class="flex-fill">
-            <h1 class="mb-1">{{ service.domain }}</h1>
+            <h1 class="mb-1"{% if is_idn_domain %} data-managed-domain-idn{% endif %}>
+              {% if is_idn_domain %}
+                <bdi data-domain-unicode>{{ service.domain }}</bdi>
+                <small class="d-none text-secondary fw-normal" style="font-size: 0.7rem;" dir="ltr" data-domain-ascii>{{ service.domain }}</small>
+              {% else %}
+                {{ service.domain }}
+              {% endif %}
+            </h1>
             {% if order.period and order.expires_at %}
               {% set days_left = order.expires_at|daysleft %}
               {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'primary') %}
@@ -588,6 +596,35 @@
     </div>
 
 {% block js %}
+{% if is_idn_domain %}
+<script src="{{ 'libs/punycode/punycode.js'|asset_url }}"></script>
+<script>
+(function () {
+    function showUnicodeDomains() {
+        document.querySelectorAll('[data-managed-domain-idn]').forEach(function (element) {
+            const name = element.querySelector('[data-domain-unicode]');
+            const original = element.querySelector('[data-domain-ascii]');
+            const ascii = name.textContent.trim();
+            if (ascii.length > 253 || !/^[a-z0-9.-]+$/i.test(ascii)
+                || ascii.split('.').some(label => label.length > 63)) return;
+            try {
+                const unicode = window.domainxPunycode.toUnicode(ascii.toLowerCase());
+                if (unicode === ascii || new URL('https://' + unicode).hostname !== ascii.toLowerCase()) return;
+                name.textContent = unicode;
+                original.classList.remove('d-none');
+            } catch (_) {
+                // Keep the encoded name if conversion or library loading fails.
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showUnicodeDomains, { once: true });
+    } else {
+        showUnicodeDomains();
+    }
+})();
+</script>
+{% endif %}
 <script src="{{ 'libs/intl-tel-input/dist/js/intlTelInputWithUtils.min.js'|asset_url }}"></script>
 <script>
 window.onRenewalInvoiceCreated = (hash) => {

@@ -19,6 +19,8 @@
         "hide_addons": 1
     }) %}
 
+    {% set has_idn_domains = false %}
+
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
@@ -65,12 +67,18 @@
                                         : order.title
                                     %}
 
+                                    {% set is_idn_domain = service_title|lower starts with 'xn--' or '.xn--' in service_title|lower %}
+                                    {% if is_idn_domain %}{% set has_idn_domains = true %}{% endif %}
+
                                     <tr>
                                         {# Service #}
-                                        <td>
+                                        <td{% if is_idn_domain %} data-order-domain-idn{% endif %}>
                                             <a href="{{ "order/service/manage/#{order.id}"|url }}" class="text-primary fw-semibold">
-                                                {{ service_title }}
+                                                {% if is_idn_domain %}<bdi data-domain-unicode>{{ service_title }}</bdi>{% else %}{{ service_title }}{% endif %}
                                             </a>
+                                            {% if is_idn_domain %}
+                                                <small class="d-none text-secondary" style="display: block; font-size: 0.7rem;" dir="ltr" data-domain-ascii>{{ service_title }}</small>
+                                            {% endif %}
                                         </td>
 
                                         {# Price #}
@@ -138,4 +146,33 @@
             </div>
         </div>
     </div>
+    {% if has_idn_domains %}
+    <script src="{{ 'libs/punycode/punycode.js'|asset_url }}"></script>
+<script>
+(function () {
+    function showUnicodeDomains() {
+        document.querySelectorAll('[data-order-domain-idn]').forEach(function (element) {
+            const name = element.querySelector('[data-domain-unicode]');
+            const original = element.querySelector('[data-domain-ascii]');
+            const ascii = name.textContent.trim();
+            if (ascii.length > 253 || !/^[a-z0-9.-]+$/i.test(ascii)
+                || ascii.split('.').some(label => label.length > 63)) return;
+            try {
+                const unicode = window.domainxPunycode.toUnicode(ascii.toLowerCase());
+                if (unicode === ascii || new URL('https://' + unicode).hostname !== ascii.toLowerCase()) return;
+                name.textContent = unicode;
+                original.classList.remove('d-none');
+            } catch (_) {
+                // Keep the encoded name if conversion or library loading fails.
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showUnicodeDomains, { once: true });
+    } else {
+        showUnicodeDomains();
+    }
+})();
+</script>
+    {% endif %}
 {% endblock %}
