@@ -76,6 +76,10 @@
                          <div class="ribbon ribbon-top ribbon-bookmark bg-azure">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-2" /><path d="M3 15a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -2" /><path d="M7 8l0 .01" /><path d="M7 16l0 .01" /><path d="M11 8h6" /><path d="M11 16h6" /></svg>
                          </div>
+                         {% elseif product.type == 'ssl' %}
+                         <div class="ribbon ribbon-top ribbon-bookmark bg-purple">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" /><path d="M11 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12l0 2.5" /></svg>
+                         </div>
                          {% else %}
                          <div class="ribbon ribbon-top ribbon-bookmark bg-cyan">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -101,7 +105,7 @@
                               <div class="h2 my-3">{{ product.price_starting_from|format_currency(cart_currency ?? default_currency) }}</div>
                             {% endif %}
                             <div class="text-center mt-4">
-                               <a href="{{ ('/order/' ~ product.slug) | url }}" class="btn {% if product.type == 'domain' %}btn-green{% elseif product.type == 'hosting' %}btn-orange{% elseif product.type == 'downloadable' %}btn-indigo{% elseif product.type == 'license' %}btn-pink{% elseif product.type == 'dns' %}btn-azure{% else %}btn-cyan{% endif %} w-100">{{ 'Choose'|trans }}</a>
+                               <a href="{{ ('/order/' ~ product.slug) | url }}" class="btn {% if product.type == 'domain' %}btn-green{% elseif product.type == 'hosting' %}btn-orange{% elseif product.type == 'downloadable' %}btn-indigo{% elseif product.type == 'license' %}btn-pink{% elseif product.type == 'dns' %}btn-azure{% elseif product.type == 'ssl' %}btn-purple{% else %}btn-cyan{% endif %} w-100">{{ 'Choose'|trans }}</a>
                             </div>
                          </div>
                       </div>
