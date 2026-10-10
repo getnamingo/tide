@@ -55,18 +55,22 @@
                         </div>
                         <div class="row">
                             <div class="mb-3 col-md-12">
-                                <label class="form-label" for="company">{{ 'Company Name'|trans }}</label>
-                                <input type="text" class="form-control" name="company" id="company" value="{{ profile.company }}" {% if "company" in required %} required {% endif %}>
+                                <label class="form-label" for="company_number">
+                                    <span class="d-none d-md-inline">{{ 'National Identification Number'|trans }}</span>
+                                    <span class="d-inline d-md-none">{{ 'National ID'|trans }}</span>
+                                    / {{ 'Company Number'|trans }}
+                                </label>
+                                <input type="text" class="form-control" name="company_number" id="company_number" value="{{ profile.company_number }}">
                             </div>
                         </div>
                         <div class="row">
                             <div class="mb-3 col-md-6">
-                                <label class="form-label" for="company_vat">{{ 'Company VAT'|trans }}</label>
-                                <input type="text" class="form-control" name="company_vat" id="company_vat" value="{{ profile.company_vat }}">
+                                <label class="form-label" for="company">{{ 'Company Name'|trans }}</label>
+                                <input type="text" class="form-control" name="company" id="company" value="{{ profile.company }}" {% if "company" in required %} required {% endif %}>
                             </div>
                             <div class="mb-3 col-md-6">
-                                <label class="form-label" for="company_number">{{ 'Company Number'|trans }}</label>
-                                <input type="text" class="form-control" name="company_number" id="company_number" value="{{ profile.company_number }}">
+                                <label class="form-label" for="company_vat">{{ 'Company VAT'|trans }}</label>
+                                <input type="text" class="form-control" name="company_vat" id="company_vat" value="{{ profile.company_vat }}">
                             </div>
                         </div>
                         <div class="row">
