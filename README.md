@@ -19,6 +19,12 @@ Tide is a client area theme for FOSSBilling. It's designed to enhance your user 
 
 We strongly recommend upgrading to the latest version of FOSSBilling.
 
+## DNSSEC
+
+The domain DNSSEC form includes algorithms 17 (SM2SM3) and 18 (ML-DSA-44), and digest types 2 (SHA-256), 4 (SHA-384), and 6 (SM3). These choices also allow matching DS records from a linked DNS service to populate the form automatically.
+
+Use the updated [DomainX module](https://github.com/getnamingo/fossbilling-domainx) for digest-length validation. Copy DS values from your authoritative DNS provider and select values supported by the domain's registry. Tide displays and submits DS records; it does not generate DNSSEC keys or digests.
+
 ## Installation
 
 1. Get the Tide theme using one of the following methods:
