@@ -15,15 +15,9 @@ Tide is a client area theme for FOSSBilling. It's designed to enhance your user 
 
 ## Compatibility
 
-- Tide 1.2.11 → FOSSBilling 0.8.8
+- Tide 1.2.12 → FOSSBilling 0.8.8
 
 We strongly recommend upgrading to the latest version of FOSSBilling.
-
-## DNSSEC
-
-The domain DNSSEC form includes algorithms 17 (SM2SM3) and 18 (ML-DSA-44), and digest types 2 (SHA-256), 4 (SHA-384), and 6 (SM3). These choices also allow matching DS records from a linked DNS service to populate the form automatically.
-
-Use the updated [DomainX module](https://github.com/getnamingo/fossbilling-domainx) for digest-length validation. Copy DS values from your authoritative DNS provider and select values supported by the domain's registry. Tide displays and submits DS records; it does not generate DNSSEC keys or digests.
 
 ## Installation
 
@@ -32,13 +26,13 @@ Use the updated [DomainX module](https://github.com/getnamingo/fossbilling-domai
    **a. Download from GitHub**
 
    - Download the ZIP archive and extract it.
-   - Open the extracted directory, for example `tide-1.2.11`.
+   - Open the extracted directory, for example `tide-1.2.12`.
    - Rename the theme directory inside it to `tide`.
 
    **b. Clone with Git**
 
    ```bash
-   git clone --branch v1.2.11 --depth 1 https://github.com/getnamingo/tide.git
+   git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git
    ```
 
    This creates a directory named `tide`.
@@ -67,13 +61,13 @@ Use the updated [DomainX module](https://github.com/getnamingo/fossbilling-domai
    **a. Download from GitHub**
 
    - Download the ZIP archive and extract it.
-   - Open the extracted directory, for example `tide-1.2.11`.
+   - Open the extracted directory, for example `tide-1.2.12`.
    - Rename the theme directory inside it to `tide`.
 
    **b. Clone with Git**
 
    ```bash
-   git clone --branch v1.2.11 --depth 1 https://github.com/getnamingo/tide.git
+   git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git
    ```
 
    This creates a directory named `tide`.
