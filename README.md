@@ -21,91 +21,38 @@ We strongly recommend upgrading to the latest version of FOSSBilling.
 
 ## Installation
 
-1. Get the Tide theme using one of the following methods:
+```bash
+TMP=$(mktemp -d)
+git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
+mkdir -p /var/www/themes/tide
+cp -a "$TMP/tide/." /var/www/themes/tide/
+rm -rf /var/www/themes/tide/.git
+chown -R www-data:www-data /var/www/themes/tide
+find /var/www/themes/tide -type d -exec chmod 755 {} +
+find /var/www/themes/tide -type f -exec chmod 644 {} +
+rm -rf "$TMP"
+```
 
-   **a. Download from GitHub**
-
-   - Download the ZIP archive and extract it.
-   - Open the extracted directory, for example `tide-1.2.12`.
-   - Rename the theme directory inside it to `tide`.
-
-   **b. Clone with Git**
-
-   ```bash
-   git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git
-   ```
-
-   This creates a directory named `tide`.
-
-2. Move the `tide` directory into your FOSSBilling themes directory:
-
-   ```bash
-   mv tide /var/www/themes/
-   ```
-
-   Replace `/var/www` with your FOSSBilling installation path if different.
-
-3. Set the correct owner and permissions:
-
-   ```bash
-   chown -Rf www-data:www-data /var/www/themes/tide
-   chmod -Rf 750 /var/www/themes/tide
-   ```
-
-4. In the FOSSBilling admin panel, go to `Settings -> Themes` and select `tide` as the default theme.
+- In the FOSSBilling admin panel, go to `Settings -> Themes` and select `Tide` as the default theme.
 
 ## Upgrade
 
-1. Get the Tide theme using one of the following methods:
-
-   **a. Download from GitHub**
-
-   - Download the ZIP archive and extract it.
-   - Open the extracted directory, for example `tide-1.2.12`.
-   - Rename the theme directory inside it to `tide`.
-
-   **b. Clone with Git**
-
-   ```bash
-   git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git
-   ```
-
-   This creates a directory named `tide`.
-
-2. Back up your existing Tide configuration and custom files:
-
-   - `/var/www/themes/tide/config/settings_data.json`
-   - `/var/www/themes/tide/assets/custom`
-   - `/var/www/themes/tide/html/custom`
-
-   Replace `/var/www` with your FOSSBilling installation path if different.
-
-3. Replace the existing Tide theme with the new version:
-
-   ```bash
-   rm -rf /var/www/themes/tide
-   mv tide /var/www/themes/
-   ```
-
-4. Restore `settings_data.json` and any files from `assets/custom` and `html/custom` from your backup.
-
-5. Set the correct owner and permissions:
-
-   ```bash
-   chown -Rf www-data:www-data /var/www/themes/tide
-   chmod -Rf 750 /var/www/themes/tide
-   ```
+```bash
+TMP=$(mktemp -d)
+git clone --branch v1.2.12 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
+cp -a /var/www/themes/tide/config/settings_data.json "$TMP/settings_data.json"
+cp -a "$TMP/tide/." /var/www/themes/tide/
+cp -a "$TMP/settings_data.json" /var/www/themes/tide/config/settings_data.json
+rm -rf /var/www/themes/tide/.git
+chown -R www-data:www-data /var/www/themes/tide
+find /var/www/themes/tide -type d -exec chmod 755 {} +
+find /var/www/themes/tide -type f -exec chmod 644 {} +
+rm -rf "$TMP"
+```
 
 ### Upgrade from v1.1.3
 
 If you customized your CSS in v1.1.3 or earlier, move `FOSSBilling directory/themes/tide/assets/css/extra.css` to `FOSSBilling directory/themes/tide/assets/custom/extra.css` before upgrading and follow Section 2 of the Theme Customization section below.
-
-### Security Measures for Prior Installations (Before 0.9.5)
-
-For versions of Tide installed prior to 0.9.5, implement these security measures:
-
-1. Change the directory owner to the web server user. For example: `chown -Rf www-data:www-data tide/`.
-2. Set permissions to `750` using chmod: `chmod -Rf 750 tide/`.
 
 ## Theme Customization
 
