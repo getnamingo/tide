@@ -181,12 +181,12 @@
                                         {# Action #}
                                         <td class="text-end text-nowrap">
                                             {% if status == 'unpaid' %}
-                                                <a class="btn btn-sm btn-success" href="{{ "invoice/#{invoice.hash}"|url }}">
-                                                    {{ 'Pay'|trans }}
+                                                <a class="btn btn-icon btn-success" href="{{ "invoice/#{invoice.hash}"|url }}" title="{{ 'Pay'|trans }}" aria-label="{{ 'Pay'|trans }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -8" /><path d="M3 10l18 0" /><path d="M7 15l.01 0" /><path d="M11 15l2 0" /></svg>
                                                 </a>
                                             {% else %}
-                                                <a class="btn btn-sm btn-outline-secondary" href="{{ "invoice/#{invoice.hash}"|url }}">
-                                                    {{ 'View'|trans }}
+                                                <a class="btn btn-icon btn-outline-secondary" href="{{ "invoice/#{invoice.hash}"|url }}" title="{{ 'View'|trans }}" aria-label="{{ 'View'|trans }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
                                                 </a>
                                             {% endif %}
                                         </td>
@@ -206,28 +206,14 @@
                     {% endif %}
 
                 {% else %}
-                    <div class="card-body text-center py-5">
-
-                        <div class="h3 mb-2">
-                            {{ 'No invoices found'|trans }}
-                        </div>
-
-                        <div class="text-muted">
-                            {% if invoice_status == 'all' %}
-                                {{ 'You do not have any invoices yet.'|trans }}
-                            {% else %}
-                                {{ 'There are no invoices with this status.'|trans }}
-                            {% endif %}
-                        </div>
-
-                        {% if invoice_status != 'all' %}
-                            <div class="mt-3">
-                                <a href="{{ 'invoice'|url }}" class="btn btn-outline-secondary">
-                                    {{ 'View all invoices'|trans }}
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
+                    {{ include('partial_empty_state.html.twig', {
+                        'title': 'No invoices found'|trans,
+                        'description': invoice_status == 'all'
+                            ? 'You do not have any invoices yet.'|trans
+                            : 'There are no invoices with this status.'|trans,
+                        'action_url': invoice_status != 'all' ? ('invoice'|url) : null,
+                        'action_label': 'View all invoices'|trans
+                    }) }}
                 {% endif %}
             </div>
         </div>

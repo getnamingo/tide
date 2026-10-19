@@ -17,14 +17,22 @@
 
 {% block page_actions %}
     {% if can_reply %}
-        <button type="button" class="btn btn-primary" id="reply-to-btn">
+        <button type="button" class="btn btn-primary d-none d-sm-inline-block text-nowrap js-ticket-reply">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 14l11 -11" /><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg>
             {{ 'Reply'|trans }}
+        </button>
+        <button type="button" class="btn btn-icon btn-primary d-sm-none btn-icon text-nowrap js-ticket-reply" aria-label="{{ 'Reply'|trans }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 14l11 -11" /><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg>
         </button>
     {% endif %}
 
     {% if ticket.status != 'closed' %}
-        <button type="button" class="btn btn-outline-secondary" id="ticket-close">
+        <button type="button" class="btn btn-outline-secondary d-none d-sm-inline-block text-nowrap js-ticket-close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
             {{ 'Close Ticket'|trans }}
+        </button>
+        <button type="button" class="btn btn-icon btn-outline-secondary d-sm-none btn-icon text-nowrap js-ticket-close" aria-label="{{ 'Close Ticket'|trans }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
         </button>
     {% endif %}
 {% endblock %}
@@ -157,7 +165,6 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const ticketReplyForm = document.getElementById('ticket-reply-form');
-            const closeTicketBtn = document.getElementById('ticket-close');
             const postReplyBtn = document.getElementById('post-reply-btn');
             const replyToMessageBtn = document.querySelectorAll('.btn-quote-reply');
             const ticketReplyTextArea = document.getElementById('ticket-reply-text');
@@ -176,18 +183,20 @@
                 )
             });
 
-            closeTicketBtn?.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleLoader();
-                supportApi.post('support/ticket_close', FOSSBilling.tools.serializeFormDataToObject(new FormData(ticketReplyForm)),
-                    () => {
-                        flashMessage({
-                            message: 'Closed ticket #{{ ticket.id }}',
-                            reload: true
-                        });
-                    },
-                    (res) => FOSSBilling.message(`${res.message} (${res.code})`, 'error')
-                )
+            document.querySelectorAll('.js-ticket-close').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleLoader();
+                    supportApi.post('support/ticket_close', FOSSBilling.tools.serializeFormDataToObject(new FormData(ticketReplyForm)),
+                        () => {
+                            flashMessage({
+                                message: 'Closed ticket #{{ ticket.id }}',
+                                reload: true
+                            });
+                        },
+                        (res) => FOSSBilling.message(`${res.message} (${res.code})`, 'error')
+                    );
+                });
             });
 
             postReplyBtn?.addEventListener('click', () => {
@@ -211,12 +220,14 @@
                 });
             })
 
-            document.getElementById('reply-to-btn')?.addEventListener('click', () => {
-                if (ticketReplyTextArea.editor) {
-                    ticketReplyTextArea.editor.focus();
-                } else {
-                    ticketReplyTextArea.focus();
-                }
+            document.querySelectorAll('.js-ticket-reply').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    if (ticketReplyTextArea.editor) {
+                        ticketReplyTextArea.editor.focus();
+                    } else {
+                        ticketReplyTextArea.focus();
+                    }
+                });
             });
 
             const toggleLoader = () => {

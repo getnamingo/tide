@@ -14,8 +14,12 @@
 {% endblock %}
 
 {% block page_actions %}
-    <a href="{{ '/order'|url }}" class="btn btn-primary">
+    <a href="{{ '/order'|url }}" class="btn d-none d-sm-inline-block btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
         {{ 'New Order'|trans }}
+    </a>
+    <a href="{{ '/order'|url }}" class="btn btn-primary d-sm-none btn-icon" aria-label="{{ 'New Order'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
     </a>
 {% endblock %}
 
@@ -113,8 +117,8 @@
 
                                         {# Actions #}
                                         <td class="text-end text-nowrap">
-                                            <a class="btn btn-sm btn-outline-primary" href="{{ "order/service/manage/#{order.id}"|url }}">
-                                                {{ 'Manage'|trans }}
+                                            <a class="btn btn-icon btn-outline-primary" href="{{ "order/service/manage/#{order.id}"|url }}" title="{{ 'Manage'|trans }}" aria-label="{{ 'Manage'|trans }} {{ service_title }}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
                                             </a>
                                         </td>
                                     </tr>
@@ -134,11 +138,12 @@
                     {% endif %}
 
                 {% else %}
-                    <div class="card-body">
-                        <div class="d-flex justify-content-center my-2 py-4">
-                            <span class="m-0">{{ 'No orders yet'|trans }}</span>
-                        </div>
-                    </div>
+                    {{ include('partial_empty_state.html.twig', {
+                        'title': 'No orders yet'|trans,
+                        'description': 'You have not placed any orders yet.'|trans,
+                        'action_url': 'order'|url,
+                        'action_label': 'New Order'|trans
+                    }) }}
                 {% endif %}
             </div>
         </div>

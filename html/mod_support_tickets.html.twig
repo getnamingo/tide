@@ -9,10 +9,16 @@
     {{ 'Need an answer? We are here to help!'|trans }}
 {% endblock %}
 {% block page_actions %}
-    <button type="button" class="btn btn-primary"
+    <button type="button" class="btn btn-primary d-none d-sm-inline-block text-nowrap"
             data-bs-toggle="modal"
             data-bs-target="#open-ticket-modal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
         {{ 'New Ticket'|trans }}
+    </button>
+    <button type="button" class="btn btn-icon btn-primary d-sm-none btn-icon text-nowrap"
+            data-bs-toggle="modal"
+            data-bs-target="#open-ticket-modal" aria-label="{{ 'New Ticket'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
     </button>
 {% endblock %}
 
@@ -92,12 +98,12 @@
                                         {# Actions #}
                                         <td class="text-end text-nowrap">
                                             {% if ticket.status == 'closed' %}
-                                                <a href="{{ "support/ticket/#{ticket.id}"|url }}" class="btn btn-sm btn-outline-secondary">
-                                                    {{ 'View'|trans }}
+                                                <a href="{{ "support/ticket/#{ticket.id}"|url }}" class="btn btn-icon btn-outline-secondary" title="{{ 'View'|trans }}" aria-label="{{ 'View'|trans }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
                                                 </a>
                                             {% else %}
-                                                <a href="{{ "support/ticket/#{ticket.id}"|url }}#reply-to" class="btn btn-sm btn-outline-primary">
-                                                    {{ 'Reply'|trans }}
+                                                <a href="{{ "support/ticket/#{ticket.id}"|url }}#reply-to" class="btn btn-icon btn-outline-primary" title="{{ 'Reply'|trans }}" aria-label="{{ 'Reply'|trans }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12" /><path d="M11 8l-3 3l3 3" /><path d="M16 11h-8" /></svg>
                                                 </a>
                                             {% endif %}
                                         </td>
@@ -117,11 +123,10 @@
                     {% endif %}
 
                 {% else %}
-                    <div class="card-body">
-                        <div class="d-flex justify-content-center my-2 py-4">
-                            <span class="m-0">{{ 'No Support Tickets'|trans }}</span>
-                        </div>
-                    </div>
+                    {{ include('partial_empty_state.html.twig', {
+                        'title': 'No Support Tickets'|trans,
+                        'description': 'You have not submitted any support tickets yet.'|trans
+                    }) }}
                 {% endif %}
             </div>
         </div>

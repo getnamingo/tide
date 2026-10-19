@@ -8,6 +8,9 @@
 {% set is_idn_domain = order.service_type == 'domain' and service.domain is defined
     and (service.domain|lower starts with 'xn--' or '.xn--' in service.domain|lower) %}
 {% set addons = client.order_addons({ "id": order.id }) %}
+{% set upgradables = client.order_upgradables({ 'id': order.id }) %}
+{% set generic_details = order.service_type not in ['domain', 'dns', 'hosting']
+    or order.status not in ['active', 'suspended'] %}
 
 {% import "macro_functions.html.twig" as mf %}
 
@@ -79,14 +82,15 @@
 {% endblock %}
 
 {% block page_actions %}
-    {% if order.status == 'active'
-        and order.service_type in ['domain', 'dns', 'hosting']
-        and order.period %}
+    {% if order.period and (
+        (order.status == 'active' and order.service_type in ['domain', 'dns', 'hosting'])
+        or (generic_details and order.status != 'failed_renew')
+    ) %}
 
         {% set days_left = order.expires_at ? order.expires_at|daysleft : 31 %}
-        {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'primary') %}
+        {% set renewal_color = days_left <= 7 ? 'danger' : (days_left <= 30 ? 'orange' : 'green') %}
 
-        <a class="btn btn-outline-{{ renewal_color }} text-nowrap"
+        <a class="btn btn-outline-{{ renewal_color }} d-none d-sm-inline-block text-nowrap"
            {{ fb_api_link({
                href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}),
                modal: {
@@ -96,8 +100,89 @@
                },
                callback: 'onRenewalInvoiceCreated'
            }) }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
             {{ 'Renew Now'|trans }}
         </a>
+        <a class="btn btn-outline-{{ renewal_color }} d-sm-none btn-icon text-nowrap"
+           {{ fb_api_link({
+               href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}),
+               modal: {
+                   type: 'confirm',
+                   title: 'Are you sure?'|trans,
+                   content: 'This will generate new invoice. Are you sure you want to continue?'|trans
+               },
+               callback: 'onRenewalInvoiceCreated'
+           }) }} aria-label="{{ 'Renew Now'|trans }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+        </a>
+    {% endif %}
+
+    {% if generic_details %}
+        {% set generic_actions = [
+            {
+                'show': upgradables,
+                'id': 'request-upgrade',
+                'target': '#upgrade-request-modal',
+                'label': 'Request Upgrade'|trans,
+                'color': 'primary',
+                'icon': 'arrow-up'
+            },
+            {
+                'show': true,
+                'id': 'open-ticket',
+                'target': '#open-ticket-modal',
+                'label': 'Open Ticket'|trans,
+                'color': 'info',
+                'icon': 'message-circle'
+            },
+            {
+                'show': order.status == 'active',
+                'id': 'request-cancel',
+                'target': '#cancel-request-modal',
+                'label': 'Request Cancellation'|trans,
+                'color': 'danger',
+                'icon': 'circle-x'
+            }
+        ] %}
+
+        {% for action in generic_actions|filter(a => a.show) %}
+            {% set action_svg %}
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="24" height="24" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     class="icon" aria-hidden="true">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+
+                    {% if action.icon == 'message-circle' %}
+                        <path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1" />
+                    {% elseif action.icon == 'circle-x' %}
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                        <path d="M10 10l4 4m0 -4l-4 4" />
+                    {% elseif action.icon == 'arrow-up' %}
+                        <path d="M12 19v-14m-7 7l7 -7l7 7"/>
+                    {% endif %}
+                </svg>
+            {% endset %}
+
+            <button type="button"
+                    id="{{ action.id }}"
+                    class="btn btn-outline-{{ action.color }} d-none d-sm-inline-flex align-items-center text-nowrap"
+                    data-bs-toggle="modal"
+                    data-bs-target="{{ action.target }}">
+                {{ action_svg|raw }}
+                {{ action.label }}
+            </button>
+
+            <button type="button"
+                    class="btn btn-outline-{{ action.color }} btn-icon d-sm-none"
+                    data-bs-toggle="modal"
+                    data-bs-target="{{ action.target }}"
+                    title="{{ action.label }}"
+                    aria-label="{{ action.label }}">
+                {{ action_svg|raw }}
+            </button>
+        {% endfor %}
     {% endif %}
 {% endblock %}
 
@@ -200,19 +285,15 @@
                     {{ render_widgets('client.order.manage.details.after', { 'order': order }) }}
                 </div>
                 <div class="card-footer">
-                    {% if order.period and order.status != 'failed_renew' %}
-                        <a class="btn btn-success btn-sm"
-                           {{ fb_api_link({href: 'invoice/renewal_invoice'|api_url(query: {order_id: order.id}), modal: {type: 'confirm', title: 'Are you sure?'|trans, content: 'This will generate new invoice. Are you sure you want to continue?'|trans}, callback: 'onRenewalInvoiceCreated'}) }}>{{ 'Renew Now'|trans }}</a>
-                        <script>window.onRenewalInvoiceCreated = (hash) => { window.location = "{{ 'invoice'|url }}/" + hash; };</script>
+                    {% set extra_actions = render_widgets('client.order.manage.actions.end', {
+                        'order': order
+                    }) %}
+
+                    {% if extra_actions|trim %}
+                        <div class="card-footer">
+                            {{ extra_actions|raw }}
+                        </div>
                     {% endif %}
-                    {% if upgradables %}
-                        <button class="btn btn-success btn-sm" type="button" id="request-upgrade" data-bs-toggle="modal" data-bs-target="#upgrade-request-modal">{{ 'Request Upgrade'|trans }}</button>
-                    {% endif %}
-                    <button class="btn btn-info btn-sm" type="button" id="open-ticket" data-bs-toggle="modal" data-bs-target="#open-ticket-modal">{{ 'Open Ticket'|trans }}</button>
-                    {% if order.status == 'active' %}
-                        <button class="btn btn-danger btn-sm" type="button" id="request-cancel" data-bs-toggle="modal" data-bs-target="#cancel-request-modal">{{ 'Request Cancellation'|trans }}</button>
-                    {% endif %}
-                    {{ render_widgets('client.order.manage.actions.end', { 'order': order }) }}
                 </div>
             </div>
 
