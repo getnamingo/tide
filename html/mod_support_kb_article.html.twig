@@ -7,6 +7,25 @@
     {{ (article.content ?? '')|markdown_to_html|striptags|trim|truncate(160) }}
 {% endblock %}
 
+{% block page_header %}
+    {{ article.title }}
+{% endblock %}
+
+{% block page_description %}
+    {% if article.updated_at %}
+        <span class="d-inline-flex align-items-center gap-1 me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
+            {{ 'Updated'|trans }} {{ '%time% ago'|trans({'%time%': article.updated_at|timeago}) }}
+        </span>
+    {% endif %}
+    {% if guest.support_kb_article_views_enabled %}
+        <span class="d-inline-flex align-items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+            {{ article.views }} {{ 'views'|trans }}
+        </span>
+    {% endif %}
+{% endblock %}
+
 {% block body_class %}kb-article{% endblock %}
 
 {% block head %}
@@ -24,39 +43,6 @@
 
         .kb-article-content > :last-child {
             margin-bottom: 0;
-        }
-
-        .kb-related-link {
-            display: flex;
-            align-items: flex-start;
-            gap: .75rem;
-            padding: .875rem 1rem;
-            color: inherit;
-            text-decoration: none;
-            border-top: 1px solid var(--tblr-border-color);
-            transition:
-                background-color .15s ease,
-                color .15s ease;
-        }
-
-        .kb-related-link:first-child {
-            border-top: 0;
-        }
-
-        .kb-related-link:hover {
-            color: var(--tblr-primary);
-            background: var(--tblr-bg-surface-secondary);
-        }
-
-        .kb-related-link-title {
-            min-width: 0;
-            line-height: 1.4;
-        }
-
-        .kb-related-link-icon {
-            flex: 0 0 auto;
-            margin-top: .125rem;
-            color: var(--tblr-secondary);
         }
 
         @media (min-width: 992px) {
@@ -95,47 +81,9 @@
         |slice(0, 5)
     %}
 
-    <header class="mb-4">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="mb-1">
-                    {{ article.title }}
-                </h1>
-
-                {% if article.updated_at or guest.support_kb_article_views_enabled %}
-                    <div class="text-secondary mt-2">
-                        <div class="d-flex flex-wrap align-items-center gap-3">
-                            {% if article.updated_at %}
-                                <span class="d-inline-flex align-items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
-
-                                    {{ 'Updated'|trans }}
-                                    {{ '%time% ago'|trans({
-                                        '%time%': article.updated_at|timeago
-                                    }) }}
-                                </span>
-                            {% endif %}
-
-                            {% if guest.support_kb_article_views_enabled %}
-                                <span class="d-inline-flex align-items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
-
-                                    {{ article.views }}
-                                    {{ 'views'|trans }}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </header>
-
     <div class="row row-cards">
-        <main class="col-lg-8 col-xl-9">
+        <div class="col-lg-8 col-xl-9">
             <div class="card">
-                <div class="card-status-top bg-primary"></div>
-
                 <div class="card-body p-4 p-md-5">
                     <div class="markdown kb-article-content">
                         {{ (article.content ?? '')|markdown_to_html }}
@@ -197,7 +145,7 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
 
         <aside class="col-lg-4 col-xl-3">
             <div class="kb-sidebar-sticky">
@@ -233,17 +181,12 @@
                     </div>
 
                     {% if related_articles|length > 0 %}
-                        <div>
+                        <div class="list-group list-group-flush">
                             {% for related_article in related_articles %}
-                                <a
-                                    class="kb-related-link"
-                                    href="{{ "support/kb/#{related_article.category.slug}/#{related_article.slug}"|url }}"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9.707 5.293l6 6a1 1 0 0 1 0 1.414l-6 6a1 1 0 1 1 -1.414 -1.414l5.293 -5.293l-5.293 -5.293a1 1 0 0 1 1.414 -1.414" /></svg>
-
-                                    <span class="kb-related-link-title">
-                                        {{ related_article.title }}
-                                    </span>
+                                <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between gap-2 py-3"
+                                   href="{{ "support/kb/#{related_article.category.slug}/#{related_article.slug}"|url }}">
+                                    <span class="small fw-medium text-break">{{ related_article.title }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="m9 18 6 -6 -6 -6"/></svg>
                                 </a>
                             {% endfor %}
                         </div>

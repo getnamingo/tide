@@ -1,0 +1,31 @@
+{% extends "layout_default.html.twig" %}
+
+{% set company = guest.system_company %}
+
+{% block meta_title %}{{ 'Terms and Conditions'|trans }}{% endblock %}
+{% block meta_description %}{{ 'Review the terms and conditions that apply to your use of %company% services.'|trans({'%company%': company.name}) }}{% endblock %}
+
+{% block page_header %}
+    {{ company.name }} {{ 'Terms and Conditions'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ company.signature }}
+{% endblock %}
+
+{% block body_class %}tos{% endblock %}
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">{{ 'Terms'|trans }}</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    {{ (company.tos ?? '')|markdown_to_html }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

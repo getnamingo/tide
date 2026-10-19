@@ -5,6 +5,20 @@
 
 {% block meta_title %}{{ 'My Services'|trans }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Services'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ 'All of your orders are displayed here. Click on any service to get full information about it.'|trans }}
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ '/order'|url }}" class="btn btn-primary">
+        {{ 'New Order'|trans }}
+    </a>
+{% endblock %}
+
 {% block body_class %}order-list{% endblock %}
 
 {% block breadcrumb %}
@@ -24,23 +38,6 @@
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header py-3">
-                    <div class="d-flex justify-content-between w-100 align-items-center">
-                        <div>
-                            <h1 class="mb-1">{{ 'Services'|trans }}</h1>
-
-                            <span class="mt-1 small text-secondary">
-                                {{ 'All of your orders are displayed here. Click on any service to get full information about it.'|trans }}
-                            </span>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="{{ '/order'|url }}" class="btn btn-primary">
-                                {{ 'New Order'|trans }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
                 {% if orders.list %}
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover">

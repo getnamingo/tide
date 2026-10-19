@@ -1,49 +1,113 @@
 {% extends request.ajax ? "layout_blank.html.twig" : "layout_default.html.twig" %}
 {% set active_menu = 'news' %}
 
-{% block meta_title %}{{ 'Announcements'|trans }}{% endblock %}
+{% block meta_title %}
+    {{ 'Announcements'|trans }}
+{% endblock %}
+
+{% block meta_description %}
+    {{ 'Track our latest information.'|trans }}
+{% endblock %}
+
+{% block page_header %}
+    {{ 'Announcements'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ 'Track our latest information.'|trans }}
+{% endblock %}
 
 {% block body_class %}news-index{% endblock %}
+
 {% block breadcrumb %}
-    <li class="breadcrumb-item active" aria-current="page">{{ 'Announcements'|trans }}</li>{% endblock %}
+    <li class="breadcrumb-item active" aria-current="page">
+        {{ 'Announcements'|trans }}
+    </li>
+{% endblock %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card mb-4">
-                <div class="card-header py-3 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="mb-1">{{ 'Announcements'|trans }}</h1>
-                            <span class="small text-muted">{{ 'Track our latest information.'|trans }}</span>
-                        </div>
-                    </div>
-                </div>
-                {% set posts = guest.news_get_list({ "page": request.page, "per_page": 5 }) %}
-                <div class="card-body{% if posts.list is not empty %} pb-0{% endif %}">
-                    {% for i, post in posts.list %}
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h3 class="link-body-emphasis mb-1">{{ post.title }}</h3>
-                                <span class="text-muted">{{ post.updated_at|format_datetime }}</span>
-                                <p>
-                                    {% if post.excerpt %}
-                                        {{ (post.excerpt ?? '')|truncate(200)|markdown_to_html }}
-                                    {% else %}
-                                        {{ (post.content ?? '')|truncate(200)|markdown_to_html }}
-                                    {% endif %}
-                                </p>
-                                <a class="link-offset-2 link-underline"
-                                   href="{{ '/news'|url }}/{{ post.slug }}">{{ 'Continue reading'|trans }}
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" /></svg>
-                                </a>
+
+    {% set posts = guest.news_get_list({
+        'page': request.page|default(1),
+        'per_page': 5
+    }) %}
+
+    {% if posts.list|default([]) is not empty %}
+
+        <div class="card mb-4">
+            <div class="list-group list-group-flush">
+
+                {% for post in posts.list %}
+                    <a
+                        href="{{ "news/#{post.slug}"|url }}"
+                        class="list-group-item list-group-item-action py-4"
+                    >
+                        <div class="d-flex align-items-start gap-3">
+
+                            {# Announcement icon #}
+                            <span class="avatar avatar-md bg-primary-lt text-primary flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 8a3 3 0 0 1 0 6" /><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5" /><path d="M12 8l4.524 -3.77a.9 .9 0 0 1 1.476 .692v12.156a.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8" /></svg>
+                            </span>
+
+                            <div class="flex-fill text-break">
+
+                                {# Title #}
+                                <h2 class="h3 mb-1">
+                                    {{ post.title }}
+                                </h2>
+
+                                {# Date #}
+                                <div class="text-secondary small mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2l0 -2" /></svg>
+                                    {{ post.updated_at|format_datetime }}
+                                </div>
+
+                                {# Excerpt #}
+                                {% set preview = post.excerpt|default('', true)
+                                    ?: post.content|default('') %}
+
+                                {% if preview|trim %}
+                                    <p class="text-secondary mb-2">
+                                        {{ preview|markdown_to_html|striptags|trim|truncate(200) }}
+                                    </p>
+                                {% endif %}
+
+                                {# Read more #}
+                                <span class="text-primary fw-medium small">
+                                    {{ 'Continue reading'|trans }}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" /></svg>
+                                </span>
                             </div>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary d-none d-sm-block mt-2 flex-shrink-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
+
                         </div>
-                    {% else %}
-                        {{ 'No news or announcements'|trans }}
-                    {% endfor %}
-                </div>
+                    </a>
+                {% endfor %}
+
             </div>
+
+            {# Pagination #}
+            {% if posts.pages|default(1) > 1 %}
+                <div class="card-footer d-flex justify-content-end">
+                    {{ include('partial_pagination.html.twig', {
+                        'list': posts,
+                        'url': 'news'
+                    }) }}
+                </div>
+            {% endif %}
         </div>
-    </div>
+
+    {% else %}
+
+        {# Reusable empty state #}
+        <div class="card mb-4">
+            {{ include('partial_empty_state.html.twig', {
+                'title': 'No news or announcements'|trans,
+                'description': 'There are currently no announcements to display. Please check back later.'|trans
+            }) }}
+        </div>
+
+    {% endif %}
+
 {% endblock %}

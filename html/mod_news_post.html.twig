@@ -1,49 +1,133 @@
 {% extends request.ajax ? "layout_blank.html.twig" : "layout_default.html.twig" %}
 {% set active_menu = 'news' %}
 
+{% set display_date = post.updated_at|default(post.published_at|default(null), true) %}
+
+{% set summary_source = post.description|default('', true) %}
+{% if not summary_source %}
+    {% set summary_source = post.excerpt|default('', true) %}
+{% endif %}
+{% if not summary_source %}
+    {% set summary_source = post.content|default('') %}
+{% endif %}
+{% set summary = summary_source|markdown_to_html|striptags|trim|truncate(160) %}
+
 {% block meta_title %}{{ post.title }}{% endblock %}
-{% block meta_description %}{{ post.description }}{% endblock %}
+
+{% block meta_description %}
+    {{ summary }}
+{% endblock %}
+
+{% block page_header %}
+    {{ post.title }}
+{% endblock %}
+
+{% block page_description %}
+    {% if display_date %}
+        <span class="d-inline-flex align-items-center gap-1 me-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2l0 -2" /></svg>
+            {{ display_date|format_datetime }}
+        </span>
+    {% endif %}
+
+    {% if post.author.name|default('') %}
+        <span class="d-inline-flex align-items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+            {{ 'by'|trans }} {{ post.author.name }}
+        </span>
+    {% endif %}
+{% endblock %}
 
 {% block body_class %}news-post{% endblock %}
+
+{% block head %}
+    {{ 'css/markdown.css'|public_asset_url|stylesheet_tag }}
+{% endblock %}
+
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ 'news' | url}}">{{ 'Announcements'|trans }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">{{post.title}}</li>
+    <li class="breadcrumb-item">
+        <a href="{{ 'news'|url }}">
+            {{ 'Announcements'|trans }}
+        </a>
+    </li>
+
+    <li class="breadcrumb-item active" aria-current="page">
+        {{ post.title }}
+    </li>
 {% endblock %}
 
 {% block opengraph %}
     <meta property="og:title" content="{{ post.title }}" />
     <meta property="og:type" content="article" />
-    <meta property="og:description" content="{{ post.description }}" />
+    <meta property="og:description" content="{{ summary }}" />
     <meta property="og:url" content="{{ guest.system_current_url }}" />
-    <meta property="og:image" content="{{ post.image }}" />
-    <meta property="article:author" content="{{ post.author.name }}" />
 
-    {% if post.published_at %}<meta property="article:published_time" content="{{ post.published_at }}" />{% endif %}
-    {% if post.updated_at %}<meta property="article:modified_time" content="{{ post.updated_at }}" />{% endif %}
-    {% if post.expires_at %}<meta property="article:expiration_time" content="{{ post.expires_at }}" />{% endif %}
-    {% if post.section %}<meta property="article:section" content="{{ post.section }}" />{% endif %}
+    {% if post.image|default('') %}
+        <meta property="og:image" content="{{ post.image }}" />
+    {% endif %}
+
+    {% if post.author.name|default('') %}
+        <meta property="article:author" content="{{ post.author.name }}" />
+    {% endif %}
+
+    {% if post.published_at %}
+        <meta property="article:published_time" content="{{ post.published_at|date('c') }}" />
+    {% endif %}
+
+    {% if post.updated_at %}
+        <meta property="article:modified_time" content="{{ post.updated_at|date('c') }}" />
+    {% endif %}
+
+    {% if post.expires_at %}
+        <meta property="article:expiration_time" content="{{ post.expires_at|date('c') }}" />
+    {% endif %}
+
+    {% if post.section %}
+        <meta property="article:section" content="{{ post.section }}" />
+    {% endif %}
+
     {% set tags = post.tags|default([]) %}
-    {% if tags is not empty %}<meta property="article:tag" content="{{ tags|join(', ') }}" />{% endif %}
+    {% for tag in tags %}
+        <meta property="article:tag" content="{{ tag }}" />
+    {% endfor %}
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <div class="card ms-0 ms-md-3 w-100">
-            <div class="card-header">
-                <h3 class="card-title">{{ post.title }} <span class="card-subtitle">{{ post.updated_at|format_datetime }} {{ 'by'|trans }} {{ post.author.name }}</span></h3>
-            </div>
-            <div class="card-body">
-                <div class="pt-3 px-2">
-                    {% if post.image %}<img src="{{ post.image }}" alt="{{ post.title }}">{% endif %}
-                    {{ post.content|markdown_to_html }}
-                    {% if guest.extension_is_on({ "mod": "comment" }) %}{{ include('mod_comment_block.html.twig') }}{% endif %}
+    <div class="row">
+        <div class="col-12 col-lg-10 col-xl-9 mx-auto">
+
+            <article class="card mb-4">
+                <div class="card-status-top bg-primary"></div>
+
+                {% if post.image|default('') %}
+                    <img
+                        src="{{ post.image }}"
+                        alt="{{ post.title }}"
+                        class="img-fluid w-100"
+                    >
+                {% endif %}
+
+                <div class="card-body p-4 p-md-5">
+                    <div class="markdown">
+                        {{ (post.content ?? '')|markdown_to_html }}
+                    </div>
                 </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ '/news/'|url }}" class="btn btn-primary">{{ 'Back to the list'|trans }}</a>
-            </div>
+
+                {% if guest.extension_is_on({"mod": "comment"}) %}
+                    <div class="card-body border-top">
+                        {{ include('mod_comment_block.html.twig') }}
+                    </div>
+                {% endif %}
+
+                <div class="card-footer">
+                    <a href="{{ 'news'|url }}"
+                       class="btn btn-outline-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+                        {{ 'Back to the list'|trans }}
+                    </a>
+                </div>
+            </article>
+
         </div>
     </div>
-</div>
 {% endblock %}

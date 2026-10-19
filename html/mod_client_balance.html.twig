@@ -2,6 +2,57 @@
 
 {% block meta_title %}{{ 'Wallet'|trans }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Wallet'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ 'Here you can manage and track your account balance.'|trans }}
+{% endblock %}
+
+{% block page_actions %}
+<style>
+.wallet-amount {
+    width: 220px;
+}
+
+@media (max-width: 767.98px) {
+    .wallet-amount {
+        width: 110px;
+    }
+}
+</style>
+
+    {% if guest.invoice_funds_enabled %}
+        <form
+            method="post"
+            class="d-flex gap-2 align-items-center"
+            action="{{ 'invoice/funds_invoice'|api_url }}"
+            {{ fb_api_form({callback: 'onAfterInvoiceCreated'}) }}
+        >
+            <div class="input-group wallet-amount" style="max-width: 220px;">
+                <input
+                    id="appendedPrependedInput"
+                    class="form-control"
+                    type="text"
+                    name="amount"
+                    placeholder="0"
+                    inputmode="decimal"
+                    required
+                >
+
+                <span class="input-group-text">
+                    {{ profile.currency ?? default_currency }}
+                </span>
+            </div>
+
+            <button class="btn btn-primary text-nowrap" type="submit">
+                {{ 'Add Funds'|trans }}
+            </button>
+        </form>
+    {% endif %}
+{% endblock %}
+
 {% block breadcrumb %}
     <li class="breadcrumb-item active" aria-current="page">{{ 'Wallet'|trans }}</li>
 {% endblock %}
@@ -19,47 +70,6 @@
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
-
-                <div class="card-header py-3">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
-                        <div>
-                            <h1 class="mb-1">{{ 'Wallet'|trans }}</h1>
-                            <span class="small text-muted">
-                                {{ 'Here you can manage and track your account balance.'|trans }}
-                            </span>
-                        </div>
-
-                        {% if guest.invoice_funds_enabled %}
-                            <form
-                                method="post"
-                                class="d-flex gap-2 ms-md-auto"
-                                action="{{ 'invoice/funds_invoice'|api_url }}"
-                                {{ fb_api_form({callback: 'onAfterInvoiceCreated'}) }}
-                            >
-                                <div class="input-group" style="max-width: 220px;">
-                                    <input
-                                        id="appendedPrependedInput"
-                                        class="form-control"
-                                        type="text"
-                                        name="amount"
-                                        placeholder="0"
-                                        inputmode="decimal"
-                                        required
-                                    >
-
-                                    <span class="input-group-text">
-                                        {{ profile.currency ?? default_currency }}
-                                    </span>
-                                </div>
-
-                                <button class="btn btn-primary text-nowrap" type="submit">
-                                    {{ 'Add Funds'|trans }}
-                                </button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </div>
-
                 {% if transactions.list %}
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover">

@@ -7,6 +7,28 @@
 
 {% block meta_title %}{{ ticket.subject }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Ticket'|trans }} #{{ ticket.id }}
+{% endblock %}
+
+{% block page_description %}
+    {{ ticket.subject }}
+{% endblock %}
+
+{% block page_actions %}
+    {% if can_reply %}
+        <button type="button" class="btn btn-primary" id="reply-to-btn">
+            {{ 'Reply'|trans }}
+        </button>
+    {% endif %}
+
+    {% if ticket.status != 'closed' %}
+        <button type="button" class="btn btn-outline-secondary" id="ticket-close">
+            {{ 'Close Ticket'|trans }}
+        </button>
+    {% endif %}
+{% endblock %}
+
 {% block head %}
     {{ 'css/markdown.css' | public_asset_url | stylesheet_tag }}
     {{ wysiwyg('.editor-textarea') }}
@@ -26,21 +48,6 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-3">
-                <div class="card-header py-3">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <h3 class="card-title">{{ 'Ticket'|trans }} #{{ ticket.id }}</h3>
-                        <div class="ms-auto">
-                            <div class="d-flex gap-2">
-                                {% if can_reply %}
-                                    <button class="btn btn-info btn-sm" id="reply-to-btn">{{ 'Reply'|trans }}</button>
-                                {% endif %}
-                                {% if ticket.status != 'closed' %}
-                                    <button class="btn btn-secondary btn-sm" type="button" id="ticket-close">{{ 'Close Ticket'|trans }}</button>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <div class="card-body">
                     <div class="datagrid">
                       <div class="datagrid-item">

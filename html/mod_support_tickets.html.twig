@@ -5,6 +5,16 @@
 
 {% block meta_title %}{{ 'Support Tickets'|trans }}{% endblock %}
 {% block page_header %}{{ 'Support Tickets'|trans }}{% endblock %}
+{% block page_description %}
+    {{ 'Need an answer? We are here to help!'|trans }}
+{% endblock %}
+{% block page_actions %}
+    <button type="button" class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#open-ticket-modal">
+        {{ 'New Ticket'|trans }}
+    </button>
+{% endblock %}
 
 {% block body_class %}support-tickets{% endblock %}
 
@@ -28,23 +38,6 @@
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header py-3">
-                    <div class="d-flex justify-content-between w-100 align-items-center">
-                        <div>
-                            <h1 class="mb-1">{{ 'Support Tickets'|trans }}</h1>
-
-                            <span class="mt-1 small text-secondary">
-                                {{ 'Need an answer? We are here to help!'|trans }}
-                            </span>
-                        </div>
-                        <div class="ms-auto">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#open-ticket-modal">
-                                {{ 'New Ticket'|trans }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 {% if tickets.list %}
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover">

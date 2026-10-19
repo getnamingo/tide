@@ -1,0 +1,36 @@
+<div class="card-body text-center py-5">
+    <div class="empty">
+
+        <div class="empty-icon mb-3">
+            <span class="avatar avatar-lg rounded-3 bg-primary-lt text-primary-lt">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /><path d="M4 13h3l3 3h4l3 -3h3" /></svg>
+            </span>
+        </div>
+
+        <p class="empty-title mb-2">
+            {{ title|default('No items found'|trans) }}
+        </p>
+
+        <p class="empty-subtitle text-secondary mb-0">
+            {{ description|default('There are currently no items to display.'|trans) }}
+        </p>
+
+        {% if action_url|default(null) or secondary_action_url|default(null) %}
+            <div class="empty-action mt-3">
+                <div class="btn-list justify-content-center">
+                    {% if action_url|default(null) %}
+                        <a href="{{ action_url }}" class="btn btn-outline-secondary">
+                            {{ action_label|default('View all'|trans) }}
+                        </a>
+                    {% endif %}
+
+                    {% if secondary_action_url|default(null) %}
+                        <a href="{{ secondary_action_url }}" class="btn btn-primary">
+                            {{ secondary_action_label|default('Contact support'|trans) }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>

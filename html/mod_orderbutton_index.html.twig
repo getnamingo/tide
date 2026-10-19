@@ -47,6 +47,58 @@
     {% endif %}
 {% endblock %}
 
+
+{% block page_header %}
+    {% if request.order matches '/^\\d+$/' %}
+        {{ product_page_title }}
+        {% if product_type != 'domain' %}
+            <span class="badge bg-primary-lt text-primary ms-2">
+                {{ product_type_label }}
+            </span>
+        {% endif %}
+    {% elseif request.checkout matches '/^\\d+$/' %}
+        {% if client %}
+            {{ 'Cart'|trans }}
+        {% else %}
+            {{ 'Login or Register'|trans }}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block page_description %}
+    {% if request.order matches '/^\\d+$/' %}
+        {% if product_type == 'domain' %}
+            {{ 'Search for a new domain or transfer one you already own.'|trans }}
+        {% else %}
+            {{ 'Choose your billing cycle and available options.'|trans }}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+    {% if request.order matches '/^\\d+$/' %}
+        {% set cart = guest.cart_get %}
+        <a href="{{ 'orderbutton?checkout=1'|url }}"
+           class="btn btn-outline-primary position-relative">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round"
+                 class="icon">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                <path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                <path d="M17 17h-11v-14h-2"/>
+                <path d="M6 5l14 1l-1 7h-13"/>
+            </svg>
+            {{ 'Cart'|trans }}
+            <span class="badge bg-green text-green-fg ms-1">
+                {{ cart.items|length }}
+            </span>
+        </a>
+    {% endif %}
+{% endblock %}
+
 {% block body_class %}order-index{% endblock %}
 {% block breadcrumb %}
         <li class="breadcrumb-item">
@@ -73,39 +125,6 @@
 <div class="row row-deck row-cards mb-3">
    <div class="col-md-12">
       <div class="card card-md">
-        <div class="card-header py-3 py-3">
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <div>
-                    <div class="d-flex align-items-center gap-2">
-                        <h1 class="mb-1">{{ product_page_title }}</h1>
-
-                        {% if product_type != 'domain' %}
-                            <span class="badge bg-primary-lt text-primary">
-                                {{ product_type_label }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    <span class="small text-muted">
-                        {% if product_type == 'domain' %}
-                            {{ 'Search for a new domain or transfer one you already own.'|trans }}
-                        {% else %}
-                            {{ 'Choose your billing cycle and available options.'|trans }}
-                        {% endif %}
-                    </span>
-                </div>
-
-                <div>
-                    {% set cart = guest.cart_get %}
-                    <a href="{{ 'orderbutton?checkout=1'|url }}" class="btn btn-light position-relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 17h-11v-14h-2" /><path d="M6 5l14 1l-1 7h-13" /></svg>&nbsp;{{ 'Cart'|trans }}
-                        <span class="badge bg-green text-green-fg ms-1">
-                            {{ cart.items | length }}
-                        </span>
-                    </a>
-                </div>
-            </div>
-         </div>
          <div class="card-body">
             {% if product %}
             {% set add_item_redirect = 'orderbutton'|url({ 'checkout' : 1 }) ~ (request.show_custom_form_values ? '&show_custom_form_values=1' : '') %}
@@ -192,13 +211,6 @@
 <div class="row row-deck row-cards mb-3">
    <div class="col-md-12">
       <div class="card">
-        <div class="card-header py-3 py-3">
-            <div class="d-flex justify-content-between align-items-center w-100">
-                <div>
-                    <h1 class="mb-1">{{ 'Cart'|trans }}</h1>
-                </div>
-            </div>
-        </div>
          <div class="card-body">
             {% if cart.items %}
             <div id="checkout">
@@ -667,7 +679,14 @@
                <div id="payment-html-inner"></div>
             </div>
             {% else %}
-            <p>Your Shopping Cart is Empty!</p>
+            <div class="card-body text-center py-5">
+               <div class="h3 mb-2">
+                  {{ 'No items found'|trans }}
+               </div>
+               <div class="text-muted">
+                  {{ 'Your Shopping Cart is Empty.'|trans }}
+               </div>
+            </div>
             {% endif %}
          </div>
       </div>

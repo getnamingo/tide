@@ -1,37 +1,71 @@
 {% extends request.ajax ? "layout_blank.html.twig" : "layout_default.html.twig" %}
 {% set active_menu = 'kb' %}
 
-{% block meta_title %}{{ category.title }}{% endblock %}
-{% block meta_description %}{{ category.description|default('Browse support articles in this knowledge base category.'|trans) }}{% endblock %}
+{% block meta_title %}{{ category.title|raw }}{% endblock %}
+
+{% block meta_description %}
+    {{ category.description|default('Browse support articles in this knowledge base category.'|trans, true) }}
+{% endblock %}
+
+{% block page_header %}
+    {{ category.title }}
+{% endblock %}
+
+{% block page_description %}
+    {{ category.description|default('Browse support articles in this knowledge base category.'|trans, true) }}
+{% endblock %}
 
 {% block body_class %}kb-category{% endblock %}
+
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ 'support/kb'|url }}">{{ 'Knowledge Base'|trans }}</a>
-<li class="breadcrumb-item active" aria-current="page">{{ category.title }}</li>
+    <li class="breadcrumb-item">
+        <a href="{{ 'support/kb'|url }}">{{ 'Knowledge Base'|trans }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+        {{ category.title }}
+    </li>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-header py-3 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="mb-1">{{ category.title }}</h1>
-                        <span class="small text-muted">{{ category.description }}</span>
-                    </div>
-                </div>
+    {% set articles = category.articles|default([]) %}
+
+    <div class="card mb-4">
+
+        {% if articles is not empty %}
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ 'Articles'|trans }}</h2>
+                <span class="badge bg-primary-lt text-primary ms-auto">
+                    {{ articles|length }}
+                </span>
             </div>
-            <div class="card-body">
-                <div class="list-group ms-2">
-                    {% for i, article in category.articles %}
-                        <a class="list-group-item list-group-item-action" href='{{ "support/kb/#{article.category.slug}/#{article.slug}"|url }}'>{{ article.title }}</a>
-                    {% else %}
-                        <div class="alert alert-info mb-0">{{ 'No articles in this category yet.'|trans }}</div>
-                    {% endfor %}
-                </div>
+
+            <div class="list-group list-group-flush">
+                {% for article in articles %}
+                    <a
+                        class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3"
+                        href="{{ "support/kb/#{article.category.slug}/#{article.slug}"|url }}"
+                    >
+                        <span class="avatar avatar-sm bg-primary-lt text-primary flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
+                        </span>
+
+                        <span class="flex-fill fw-medium text-break">
+                            {{ article.title }}
+                        </span>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
+                    </a>
+                {% endfor %}
             </div>
-        </div>
+
+        {% else %}
+            {{ include('partial_empty_state.html.twig', {
+                'title': 'No articles in this category yet'|trans,
+                'description': 'There are no articles available in this category yet. Explore the rest of our Knowledge Base for helpful guides and answers.'|trans,
+                'action_url': 'support/kb'|url,
+                'action_label': 'Browse all articles'|trans
+            }) }}
+        {% endif %}
+
     </div>
-</div>
 {% endblock %}

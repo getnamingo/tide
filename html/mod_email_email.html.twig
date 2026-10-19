@@ -2,37 +2,79 @@
 
 {% block meta_title %}{{ 'Email'|trans }}{% endblock %}
 
+{% block page_header %}
+    {{ email.subject }}
+{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-icon btn-outline-secondary email-resend"
+       href="#"
+       data-id="{{ email.id }}"
+       aria-label="{{ 'Resend'|trans }}"
+       data-bs-toggle="tooltip"
+       data-bs-title="{{ 'Resend'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon"
+             width="24" height="24" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/>
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+        </svg>
+    </a>
+
+    <a class="btn btn-icon btn-outline-danger email-delete"
+       href="#"
+       data-id="{{ email.id }}"
+       aria-label="{{ 'Delete'|trans }}"
+       data-bs-toggle="tooltip"
+       data-bs-title="{{ 'Delete'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon"
+             width="24" height="24" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M4 7l16 0"/>
+            <path d="M10 11l0 6"/>
+            <path d="M14 11l0 6"/>
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+        </svg>
+    </a>
+{% endblock %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item" aria-current="page"><a href="{{ 'email'|url }}">{{ 'Emails'|trans }}</a></li>
 <li class="breadcrumb-item active" aria-current="page">{{ email.subject }}</li>
 {% endblock %}
 {% block body_class %}email-email{% endblock %}
+
 {% block content %}
 <div class="row">
-<div class="col-md-12 card">
-        <div class="card-body">
-            <h4 class="mb-0">{{ email.subject }}</h4>
-            <div class="card-header px-0">
-                <div class="d-flex justify-content-between align-items-center gap-3">
-                    <div class="d-flex flex-column gap-1">
-                        <span class="d-block"><span class="text-muted me-2">{{ 'From'|trans }}</span>{{ email.sender }}</span>
-                        <span class="d-block"><span class="text-muted me-2">{{ 'To'|trans }}</span>{{ email.recipients }}</span>
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-column gap-1">
+                    <div>
+                        <span class="text-secondary me-2">{{ 'From'|trans }}</span>
+                        {{ email.sender }}
                     </div>
-                    <div class="d-flex flex-column gap-2">
-                        <div class="btn-group d-flex" role="group" aria-label="{{ 'Mail Action'|trans }}">
-                            <a class="btn btn-icon btn-outline btn-secondary email-resend" href="#" data-id="{{ email.id }}" data-bs-toggle="tooltip" data-bs-title="{{ 'Resend'|trans }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-iconh"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
-                            </a>
-                            <a class="btn btn-icon btn-outline btn-danger email-delete" href="#" data-id="{{ email.id }}" data-bs-toggle="tooltip" data-bs-title="{{ 'Delete'|trans }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                            </a>
-                        </div>
-                        <small class="text-muted">{{ email.created_at|format_date }}</small>
+                    <div>
+                        <span class="text-secondary me-2">{{ 'To'|trans }}</span>
+                        {{ email.recipients }}
+                    </div>
+                    <div class="small text-secondary mt-2">
+                        {{ email.created_at|format_date }}
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                <iframe class="ratio ratio-1x1 email" id="email-content" src="about:blank" sandbox="allow-popups" style="height: 30em"></iframe>
+
+            <div class="card-body border-top">
+                <iframe class="ratio ratio-1x1 email"
+                        id="email-content"
+                        src="about:blank"
+                        sandbox="allow-popups"
+                        style="height: 30em"></iframe>
                 <script>
                     (function () {
                         const frame = document.getElementById("email-content");
@@ -41,7 +83,7 @@
                 </script>
             </div>
         </div>
-</div>
+    </div>
 </div>
 {% endblock %}
 

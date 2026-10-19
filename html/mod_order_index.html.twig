@@ -5,6 +5,34 @@
 {% block meta_title %}{{ 'Order'|trans }}{% endblock %}
 {% block meta_description %}{{ 'Browse available products and services, compare options, and place your order online.'|trans }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Order'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ 'Browse available products and services, compare options, and place your order online.'|trans }}
+{% endblock %}
+
+{% block page_actions %}
+    {% set cart = guest.cart_get %}
+    <a href="{{ 'orderbutton?checkout=1'|url }}" class="btn btn-outline-primary position-relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round" class="icon">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+            <path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+            <path d="M17 17h-11v-14h-2"/>
+            <path d="M6 5l14 1l-1 7h-13"/>
+        </svg>
+        {{ 'Cart'|trans }}
+        <span class="badge bg-green text-green-fg ms-1">
+            {{ cart.items|length }}
+        </span>
+    </a>
+{% endblock %}
+
 {% set loader_nr = request.loader|default("8")%}
 {% set loader_url = ('img/assets/loaders/loader'~loader_nr~'.gif') %}
 
@@ -18,23 +46,6 @@
 <div class="row row-deck row-cards">
     <div class="col-md-12">
         <div class="card card-md">
-            <div class="card-header py-3 py-3">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <div>
-                        <h1 class="mb-1">{{ 'Order'|trans }}</h1>
-                        <span class="small text-muted">{{ 'Browse available products and services, compare options, and place your order online.'|trans }}</span>
-                    </div>
-                    <div>
-                        {% set cart = guest.cart_get %}
-                        <a href="{{ 'orderbutton?checkout=1'|url }}" class="btn btn-light position-relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 17h-11v-14h-2" /><path d="M6 5l14 1l-1 7h-13" /></svg>&nbsp;{{ 'Cart'|trans }}
-                            <span class="badge bg-green text-green-fg ms-1">
-                                {{ cart.items | length }}
-                            </span>
-                        </a>
-                    </div>
-                </div>
-            </div>
             <div class="card-body">
                 {% for i, category in guest.product_category_get_list.list %}
                 {% if not loop.first %}<hr />{% endif %}

@@ -409,23 +409,65 @@
         </div>
         {{ render_widgets('client.theme.header.end') }}
       </header>
-      <div class="page-wrapper">
-        {% if settings.show_breadcrumb|default('') and current_active_menu != 'dashboard' %}
+
+    <div class="page-wrapper">
+        {% set heading %}{% block page_header %}{% endblock %}{% endset %}
+        {% set description %}{% block page_description %}{% endblock %}{% endset %}
+        {% set actions %}{% block page_actions %}{% endblock %}{% endset %}
+
+        {% set show_breadcrumbs = settings.show_breadcrumb|default('') and current_active_menu != 'dashboard' %}
+        {% set heading = heading|trim %}
+        {% set description = description|trim %}
+        {% set actions = actions|trim %}
+
+        {% if show_breadcrumbs or heading or description or actions %}
         <div class="page-header d-print-none" aria-label="Page header">
-          <div class="container-xl">
-            <div class="row g-2 align-items-center">
-              <div class="col">
-                {% block breadcrumbs %}
-                <ol class="breadcrumb" aria-label="{{ 'breadcrumb'|trans }}">
-                  <li class="breadcrumb-item"><a href="{{ '/'|url }}">{{ 'Home'|trans }}</a></li>
-                    {% block breadcrumb %}
-                    <li class="breadcrumb-item active" aria-current="page"><a href="#">{{ 'Dashboard'|trans }}</a></li>
+            <div class="container-xl">
+
+                {% if show_breadcrumbs %}
+                <div class="mb-1">
+                    {% block breadcrumbs %}
+                    <ol class="breadcrumb breadcrumb-muted breadcrumb-arrows" aria-label="{{ 'breadcrumb'|trans }}">
+                        <li class="breadcrumb-item">
+                            <a href="{{ '/'|url }}">{{ 'Home'|trans }}</a>
+                        </li>
+                        {% block breadcrumb %}
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {{ 'Dashboard'|trans }}
+                        </li>
+                        {% endblock %}
+                    </ol>
                     {% endblock %}
-                </ol>
-                {% endblock %}
-              </div>
+                </div>
+                {% endif %}
+
+                {% if heading or description or actions %}
+                <div class="row g-2 align-items-center mw-100">
+                    {% if heading or description %}
+                    <div class="col">
+                        {% if heading %}
+                        <h1 class="page-section-title">{{ heading|raw }}</h1>
+                        {% endif %}
+
+                        {% if description %}
+                        <p class="page-section-description mb-0">
+                            {{ description|raw }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if actions %}
+                    <div class="col-auto">
+                        <div class="btn-list">
+                            {{ actions|raw }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
             </div>
-          </div>
         </div>
         {% endif %}
 

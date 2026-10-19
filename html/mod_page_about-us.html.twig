@@ -1,0 +1,31 @@
+{% extends "layout_default.html.twig" %}
+
+{% set company = guest.system_company %}
+
+{% block meta_title %}{{ 'About Us'|trans }}{% endblock %}
+{% block meta_description %}{{ (company.note ?? company.signature ?? company.name)|markdown_to_html|striptags|trim|truncate(160) }}{% endblock %}
+
+{% block page_header %}
+    {{ 'About Us'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ company.signature }}
+{% endblock %}
+
+{% block body_class %}about-us{% endblock %}
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">{{ 'About'|trans }}</li>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    {{ (company.note ?? '')|markdown_to_html }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
