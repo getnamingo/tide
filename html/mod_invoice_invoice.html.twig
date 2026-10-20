@@ -7,6 +7,40 @@
 
 {% block meta_title %}{{ 'Invoice'|trans }} #{{ nr }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Invoice'|trans }} #{{ nr }}
+{% endblock %}
+
+{% block page_description %}
+    {{ 'You can print this invoice or export it to a PDF file by clicking on the corresponding button.'|trans }}
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ 'invoice/pdf'|url }}/{{ invoice.hash }}"
+       target="_blank"
+       rel="noopener"
+       class="btn btn-outline-primary d-none d-sm-inline-flex align-items-center text-nowrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" /><path d="M17 18h2" /><path d="M20 15h-3v6" /><path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1" /></svg>
+        {{ 'PDF'|trans }}
+    </a>
+    <a href="{{ 'invoice/pdf'|url }}/{{ invoice.hash }}"
+       target="_blank"
+       rel="noopener"
+       class="btn btn-outline-primary btn-icon d-sm-none"
+       aria-label="{{ 'PDF'|trans }}"
+       title="{{ 'PDF'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" /><path d="M17 18h2" /><path d="M20 15h-3v6" /><path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1" /></svg>
+    </a>
+
+    <button type="button" class="btn btn-outline-secondary d-none d-sm-inline-flex align-items-center text-nowrap" onclick="window.print()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4" /></svg>
+        {{ 'Print'|trans }}
+    </button>
+    <button type="button" class="btn btn-outline-secondary btn-icon d-sm-none" onclick="window.print()" aria-label="{{ 'Print'|trans }}" title="{{ 'Print'|trans }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><path d="M7 15a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2l0 -4" /></svg>
+    </button>
+{% endblock %}
+
 {% block body_class %}invoice-invoice{% endblock %}
 
 {% block breadcrumb %}
@@ -52,13 +86,6 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card card-lg">
-              <div class="card-header d-print-none">
-                <h3 class="card-title">{{ 'Invoice'|trans }} <span class="card-subtitle">{{ 'You can print this invoice or export it to a PDF file by clicking on the corresponding button.'|trans }}</span></h3>
-                <div class="card-actions">
-                  <a href="{{ 'invoice/pdf'|url }}/{{ invoice.hash }}" target="_blank" class="btn btn-sm btn-danger">{{ 'PDF'|trans }}</a>
-                  <button type="button" class="btn btn-sm btn-dark" onclick="window.print()">{{ 'Print'|trans }}</button>
-                </div>
-              </div>
               <div class="card-body">
                 <div class="mb-3">
                 {% if company.logo_url %}
