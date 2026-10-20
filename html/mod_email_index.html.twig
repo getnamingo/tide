@@ -21,11 +21,11 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-4">
-                <div class="card-body p-0">
                     {% if emails.list is empty %}
-                        <div class="h3 mb-2 text-center py-5">
-                            {{ 'There are no emails to display'|trans }}
-                        </div>
+                        {{ include('partial_empty_state.html.twig', {
+                            'title': 'There are no emails to display'|trans,
+                            'description': 'You have not received any emails yet. Emails sent to you will appear here.'|trans
+                        }) }}
                     {% else %}
                     <div class="d-flex">
                         <div class="nav nav-tabs flex-column col-md-4 border-0">
@@ -85,7 +85,6 @@
                             {% endfor %}
                         </div>
                     </div>
-                </div>
                     {% if emails.pages >= 2 %}
                         <div class="card-footer">
                             {{ include('partial_pagination.html.twig', { 'list': emails, 'url': 'email' }) }}

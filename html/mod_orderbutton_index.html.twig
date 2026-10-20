@@ -679,14 +679,10 @@
                <div id="payment-html-inner"></div>
             </div>
             {% else %}
-            <div class="card-body text-center py-5">
-               <div class="h3 mb-2">
-                  {{ 'No items found'|trans }}
-               </div>
-               <div class="text-muted">
-                  {{ 'Your Shopping Cart is Empty.'|trans }}
-               </div>
-            </div>
+                {{ include('partial_empty_state.html.twig', {
+                    'title': 'No items found'|trans,
+                    'description': 'Your Shopping Cart is Empty.'|trans
+                }) }}
             {% endif %}
          </div>
       </div>
