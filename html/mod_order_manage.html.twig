@@ -284,17 +284,15 @@
                     </div>
                     {{ render_widgets('client.order.manage.details.after', { 'order': order }) }}
                 </div>
-                <div class="card-footer">
-                    {% set extra_actions = render_widgets('client.order.manage.actions.end', {
-                        'order': order
-                    }) %}
+                {% set extra_actions = render_widgets('client.order.manage.actions.end', {
+                    'order': order
+                }) %}
 
-                    {% if extra_actions|trim %}
-                        <div class="card-footer">
-                            {{ extra_actions|raw }}
-                        </div>
-                    {% endif %}
-                </div>
+                {% if extra_actions|trim %}
+                    <div class="card-footer">
+                        {{ extra_actions|raw }}
+                    </div>
+                {% endif %}
             </div>
 
             {# Service management #}

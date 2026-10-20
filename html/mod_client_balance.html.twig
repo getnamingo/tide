@@ -18,11 +18,10 @@
 
 @media (max-width: 767.98px) {
     .wallet-amount {
-        width: 110px;
+        width: 165px;
     }
 }
 </style>
-
     {% if guest.invoice_funds_enabled %}
         <form
             method="post"
@@ -46,8 +45,12 @@
                 </span>
             </div>
 
-            <button class="btn btn-primary text-nowrap" type="submit">
+            <button class="btn btn-primary d-none d-sm-inline-block text-nowrap" type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
                 {{ 'Add Funds'|trans }}
+            </button>
+            <button class="btn btn-primary d-sm-none btn-icon text-nowrap" type="submit" aria-label="{{ 'Add Funds'|trans }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
             </button>
         </form>
     {% endif %}
@@ -144,13 +147,11 @@
                     {% endif %}
 
                 {% else %}
-                    <div class="card-body">
-                        <div class="d-flex justify-content-center my-2 py-4">
-                            <span class="m-0">
-                                {{ 'The list is empty'|trans }}
-                            </span>
-                        </div>
-                    </div>
+                    {{ include('partial_empty_state.html.twig', {
+                        'title': 'No transactions yet'|trans,
+                        'description': 'Your wallet transaction history is currently empty. Transactions will appear here once you add funds or make a payment.'
+                            |trans
+                    }) }}
                 {% endif %}
             </div>
         </div>

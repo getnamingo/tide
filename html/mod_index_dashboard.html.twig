@@ -202,9 +202,10 @@
                           {% endfor %}
                         </div>
                         {% else %}
-                        <div class="d-flex justify-content-center my-2 p-2">
-                            <span class="m-0">{{ 'No recent orders'|trans }}</span>
-                        </div>
+                            {{ include('partial_empty_state.html.twig', {
+                                'title': 'No recent orders'|trans,
+                                'description': 'You have no recent orders to display.'|trans
+                            }) }}
                         {% endif %}
                     </div>
                 </div>
@@ -250,9 +251,10 @@
                           {% endfor %}
                         </div>
                         {% else %}
-                        <div class="d-flex justify-content-center my-2 p-2">
-                            <span class="m-0">{{ 'No recent support tickets'|trans }}</span>
-                        </div>
+                            {{ include('partial_empty_state.html.twig', {
+                                'title': 'No recent support tickets'|trans,
+                                'description': 'You have no recent support tickets to display.'|trans
+                            }) }}
                         {% endif %}
                     </div>
                 </div>
