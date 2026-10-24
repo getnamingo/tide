@@ -293,6 +293,17 @@
                     </li>
                     {% endif %}
 
+                    {% if client %}
+                    <li class="nav-item{% if current_active_menu == 'services' %} active{% endif %}">
+                      <a class="nav-link" href="{{ '/order/service'|url }}">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 4l-8 4l8 4l8 -4l-8 -4" /><path d="M4 12l8 4l8 -4" /><path d="M4 16l8 4l8 -4" /></svg>
+                        </span>
+                        <span class="nav-link-title"> {{ 'Services'|trans }} </span>
+                      </a>
+                    </li>
+                    {% endif %}
+
                     {% if guest.extension_is_on({ "mod": "domains" }) %}
                     <li class="nav-item{% if current_active_menu == 'domains' %} active{% endif %}">
                       <a class="nav-link" href="{{ '/domains'|url }}">
@@ -315,17 +326,6 @@
                     </li>
                     {% endif %}
 
-                    {% if client %}
-                    <li class="nav-item{% if current_active_menu == 'services' %} active{% endif %}">
-                      <a class="nav-link" href="{{ '/order/service'|url }}">
-                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 4l-8 4l8 4l8 -4l-8 -4" /><path d="M4 12l8 4l8 -4" /><path d="M4 16l8 4l8 -4" /></svg>
-                        </span>
-                        <span class="nav-link-title"> {{ 'Services'|trans }} </span>
-                      </a>
-                    </li>
-                    {% endif %}
-                    
                     {% if client %}
                     <li class="nav-item{% if current_active_menu == 'invoices' %} active{% endif %}">
                       <a class="nav-link" href="{{ '/invoice'|url }}">
