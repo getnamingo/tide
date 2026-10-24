@@ -695,6 +695,9 @@
 {% endblock %}
 
 {% block js %}
+{% if request.order|default('') == '1' %}
+<script>window.location.replace("{{ 'order'|url }}");</script>
+{% endif %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const nsMode = document.getElementById('checkout-ns-mode');

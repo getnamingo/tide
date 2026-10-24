@@ -47,14 +47,24 @@
     <div class="col-md-12">
         <div class="card card-md">
             <div class="card-body">
-                {% for i, category in guest.product_category_get_list.list %}
+                {% set product = guest.product_get({'id': 1}) %}
+                {% if product and product.type == 'domain' %}
+                <form method="post" action="{{ 'cart/add_item'|api_url(role: 'guest') }}"
+                      {{ fb_api_form({message: 'Product Added to Shopping Cart'|trans, redirect: 'orderbutton'|url(query: {'checkout': 1})}) }}>
+                    {{ include('mod_servicedomain_order_form.html.twig', {'product': product}) }}
+                    <input type="hidden" name="multiple" value="1">
+                </form>
+                <hr class="my-4">
+                {% endif %}
+
+                {% for i, category in guest.product_category_get_list.list|filter(c => c.products|filter(p => p.type != 'domain')|length > 0) %}
                 {% if not loop.first %}<hr />{% endif %}
                 {% if loop.length > 1 %}
                     <h2{% if not loop.first %} class="mt-4"{% endif %}>{{ category.title }}</h2>
                     <span>{{ category.description|default('', true)|markdown_to_html }}</span>
                 {% endif %}
                 <div class="row row-cards">
-                   {% for i, product in category.products|sort((a, b) => a.priority <=> b.priority) %}
+                   {% for i, product in category.products|filter(p => p.type != 'domain')|sort((a, b) => a.priority <=> b.priority) %}
                    <div class="{% if loop.length == 1 %}col-sm-12 col-lg-12{% elseif loop.length == 2 %}col-sm-6 col-lg-6{% elseif loop.length == 3 %}col-sm-6 col-lg-4{% else %}col-sm-6 col-lg-3{% endif %}">
                       <div class="card card-md">
                          {% if product.type == 'domain' %}
