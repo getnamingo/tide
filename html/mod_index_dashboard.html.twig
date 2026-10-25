@@ -460,7 +460,6 @@
     <script>
     document.addEventListener("DOMContentLoaded", function () {
 
-        const btn   = document.getElementById("domain-check");
         const input = document.querySelector('input[name="domain_name"]');
         const form  = document.getElementById("domain-search-transfer-form");
 
@@ -478,13 +477,6 @@
             sessionStorage.setItem("namingo_domain", domain);
 
             window.location.href = "/order";
-        }
-
-        if (btn) {
-            btn.addEventListener("click", function (e) {
-                e.preventDefault();
-                handleSubmit();
-            });
         }
 
         form.addEventListener("submit", function (e) {
