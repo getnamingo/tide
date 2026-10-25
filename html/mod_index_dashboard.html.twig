@@ -312,8 +312,10 @@
                             {% set featured = pricing|filter(item => (item.active ?? 0) == 1 and (item.allow_register ?? 0) == 1)|sort((a, b) => a.tld <=> b.tld)|slice(0, 5) %}
                             <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
                                 {% for item in featured %}
+                                    {% if not loop.first %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
                                     <span>{{ item.tld }} <strong>{{ (item.price_registration * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</strong></span>
                                 {% endfor %}
+                                {% if featured|length > 0 %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
                                 <a href="{{ 'domains'|url }}">{{ 'All extensions'|trans }} &rarr;</a>
                             </div>
                         {% else %}

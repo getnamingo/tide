@@ -23,6 +23,10 @@
 
 <div class="card card-borderless">
     <div class="card-body" id="register">
+        <div class="text-center mb-4">
+            <h2 class="h1 mb-2">{{ 'Find your perfect domain name.'|trans }}</h2>
+            <p class="text-secondary mb-0">{{ 'Search, register, and manage your domains with ease.'|trans }}</p>
+        </div>
     {% if guest.extension_is_on({"mod":"domainsbot"}) %}
         <div class="text-center mt-3">
             <p class="text-muted d-inline">{{ 'Need ideas? Explore:'|trans }}</p>
@@ -46,12 +50,14 @@
             {% if guest.extension_is_on({"mod":"domains"}) %}
             <div id="domain-price-strip" class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
                 {% for tld in pricing|keys|sort|filter(tld => pricing[tld].active == 1 and pricing[tld].allow_register == 1)|slice(0, 5) %}
+                    {% if not loop.first %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
                     <span>{{ tld }} <strong>{{ (pricing[tld].price_registration * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</strong></span>
                 {% endfor %}
+                <span class="text-secondary" aria-hidden="true">&middot;</span>
                 <a href="{{ 'domains'|url }}">{{ 'All extensions'|trans }} &rarr;</a>
             </div>
             {% endif %}
-            <p class="text-muted text-center mt-3 mb-0" id="info-text">Search for your perfect domain name{% if transfer_tlds is not empty %} or transfer an existing one{% endif %}.</p>
+            <p class="text-muted text-center mt-3 mb-0" id="info-text"></p>
             <input type="hidden" name="id" value="{{ product.id }}" />
             <input type="hidden" name="register_tld" value="" />
             <input type="hidden" name="register_sld" value="" />

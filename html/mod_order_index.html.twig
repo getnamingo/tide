@@ -59,14 +59,14 @@
     </div>
     {% endif %}
 
-    <div id="order-other-products" class="col-12">
+    <div id="order-other-products" class="w-100" style="display: block;">
         {% for i, category in guest.product_category_get_list.list|filter(c => c.products|filter(p => p.type != 'domain')|length > 0) %}
         <div class="mb-4">
             <h2>{{ category.title }}</h2>
             <div>{{ category.description|default('', true)|markdown_to_html }}</div>
             <div class="row row-cards">
                    {% for i, product in category.products|filter(p => p.type != 'domain')|sort((a, b) => a.priority <=> b.priority) %}
-                   <div class="col-12 col-md-6 col-lg-4">
+                   <div class="{% if loop.length == 1 %}col-12{% elseif loop.length == 2 %}col-12 col-md-6{% else %}col-12 col-md-6 col-lg-4{% endif %}">
                       <div class="card card-md">
                          {% if product.type == 'domain' %}
                          <div class="ribbon ribbon-top ribbon-bookmark bg-green">
