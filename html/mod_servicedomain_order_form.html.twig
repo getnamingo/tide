@@ -229,6 +229,7 @@ function hide(el) {
 function hideTldPricingCard() {
   const card = document.getElementById('tld-pricing-card');
   if (card) card.style.display = 'none';
+  document.getElementById('domain-price-strip')?.classList.remove('d-flex');
   hide(document.getElementById('domain-price-strip'));
   hide(document.getElementById('order-other-products'));
 }
