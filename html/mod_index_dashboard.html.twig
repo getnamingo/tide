@@ -288,41 +288,58 @@
             {% if domainProducts.list|length > 0 %}
             <div class="card">
                 <div class="card-body" id="register">
-                    <form id="domain-search-transfer-form">
-                        <div class="row g-2 mb-3">
-                            <div class="col-12 col-md-8">
-                                <input type="text" class="form-control form-control-lg" placeholder="Enter your domain name" aria-label="Domain Name" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" required>
+                    {% set domains_enabled = guest.extension_is_on({"mod":"domains"}) %}
+                    {% if domains_enabled %}
+                        <div class="text-center mb-4">
+                            <h2 class="h1 mb-2">{{ 'Find your perfect domain name.'|trans }}</h2>
+                            <p class="text-secondary mb-0">{{ 'Search, register, and manage your domains with ease.'|trans }}</p>
+                        </div>
+                    {% endif %}
+                    <form id="domain-search-transfer-form" role="search">
+                        <div class="row g-2{% if not domains_enabled %} mb-3{% endif %}">
+                            <div class="col-12 col-md-10">
+                                <label for="dashboard-domain-name" class="visually-hidden">{{ 'Domain name'|trans }}</label>
+                                <input id="dashboard-domain-name" type="search" class="form-control form-control-lg" placeholder="example.com" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" autocomplete="off" spellcheck="false" required>
                             </div>
-                            <div class="col-12 col-md-4 d-flex gap-2">
-                                <button class="btn btn-primary btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="domain-check">{{ 'Search'|trans }}</button>
+                            <div class="col-12 col-md-2">
+                                <button class="btn btn-primary btn-lg w-100" type="submit" id="domain-check">{{ 'Search'|trans }}</button>
                             </div>
                         </div>
-                        <p class="text-muted text-center mt-4" id="info-text">Search for your perfect domain name.</p>
                         {% set domainProduct = (domainProducts.list|first) %}
                         {% set pricing = domainProduct.pricing ?? {} %}
-                        {% set currency = guest.cart_get_currency %}
 
-                        {% set chips = pricing
-                          |filter(item => (item.active ?? 0) == 1)
-                          |sort((a, b) => a.tld <=> b.tld)
-                          |slice(0, 8)
-                        %}
-
-                        {% if chips|length > 0 %}
-                          <div class="mt-4">
-                            <div class="d-flex flex-wrap gap-3 justify-content-center">
-                              {% set colors = ['azure', 'indigo', 'purple', 'pink', 'teal', 'green', 'orange'] %}
-                              {% for item in chips %}
-                                {% set color = colors[loop.index0 % colors|length] %} 
-                                <div class="btn btn-light" style="pointer-events:none;">
-                                  <span class="fw-bold" style="letter-spacing:-0.01em;">{{ item.tld }}</span>
-                                  <span class="badge bg-{{ color }} text-{{ color }}-fg ms-2">
-                                    {{ ((item.price_registration) * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}
-                                  </span>
-                                </div>
-                              {% endfor %}
+                        {% if domains_enabled %}
+                            {% set featured = pricing|filter(item => (item.active ?? 0) == 1 and (item.allow_register ?? 0) == 1)|sort((a, b) => a.tld <=> b.tld)|slice(0, 5) %}
+                            <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
+                                {% for item in featured %}
+                                    <span>{{ item.tld }} <strong>{{ (item.price_registration * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</strong></span>
+                                {% endfor %}
+                                <a href="{{ 'domains'|url }}">{{ 'All extensions'|trans }} &rarr;</a>
                             </div>
-                          </div>
+                        {% else %}
+                            <p class="text-muted text-center mt-4" id="info-text">Search for your perfect domain name.</p>
+                            {% set chips = pricing
+                              |filter(item => (item.active ?? 0) == 1)
+                              |sort((a, b) => a.tld <=> b.tld)
+                              |slice(0, 8)
+                            %}
+
+                            {% if chips|length > 0 %}
+                              <div class="mt-4">
+                                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                                  {% set colors = ['azure', 'indigo', 'purple', 'pink', 'teal', 'green', 'orange'] %}
+                                  {% for item in chips %}
+                                    {% set color = colors[loop.index0 % colors|length] %}
+                                    <div class="btn btn-light" style="pointer-events:none;">
+                                      <span class="fw-bold" style="letter-spacing:-0.01em;">{{ item.tld }}</span>
+                                      <span class="badge bg-{{ color }} text-{{ color }}-fg ms-2">
+                                        {{ ((item.price_registration) * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}
+                                      </span>
+                                    </div>
+                                  {% endfor %}
+                                </div>
+                              </div>
+                            {% endif %}
                         {% endif %}
                     </form>
                 </div>
