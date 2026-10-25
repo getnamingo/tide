@@ -44,29 +44,29 @@
 
 {% block content %}
 <div class="row row-deck row-cards">
-    <div class="col-md-12">
+    {% set product = guest.product_get({'id': 1}) %}
+    {% if product and product.type == 'domain' %}
+    <div class="col-12">
         <div class="card card-md">
             <div class="card-body">
-                {% set product = guest.product_get({'id': 1}) %}
-                {% if product and product.type == 'domain' %}
                 <form method="post" action="{{ 'cart/add_item'|api_url(role: 'guest') }}"
                       {{ fb_api_form({message: 'Product Added to Shopping Cart'|trans, redirect: 'orderbutton'|url(query: {'checkout': 1})}) }}>
                     {{ include('mod_servicedomain_order_form.html.twig', {'product': product}) }}
                     <input type="hidden" name="multiple" value="1">
                 </form>
-                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-                <div id="order-other-products">
-                {% if product and product.type == 'domain' %}<hr class="my-4">{% endif %}
-                {% for i, category in guest.product_category_get_list.list|filter(c => c.products|filter(p => p.type != 'domain')|length > 0) %}
-                {% if not loop.first %}<hr />{% endif %}
-                {% if loop.length > 1 %}
-                    <h2{% if not loop.first %} class="mt-4"{% endif %}>{{ category.title }}</h2>
-                    <span>{{ category.description|default('', true)|markdown_to_html }}</span>
-                {% endif %}
-                <div class="row row-cards">
+    <div id="order-other-products" class="col-12">
+        {% for i, category in guest.product_category_get_list.list|filter(c => c.products|filter(p => p.type != 'domain')|length > 0) %}
+        <div class="mb-4">
+            <h2>{{ category.title }}</h2>
+            <div>{{ category.description|default('', true)|markdown_to_html }}</div>
+            <div class="row row-cards">
                    {% for i, product in category.products|filter(p => p.type != 'domain')|sort((a, b) => a.priority <=> b.priority) %}
-                   <div class="{% if loop.length == 1 %}col-sm-12 col-lg-12{% elseif loop.length == 2 %}col-sm-6 col-lg-6{% elseif loop.length == 3 %}col-sm-6 col-lg-4{% else %}col-sm-6 col-lg-3{% endif %}">
+                   <div class="col-12 col-md-6 col-lg-4">
                       <div class="card card-md">
                          {% if product.type == 'domain' %}
                          <div class="ribbon ribbon-top ribbon-bookmark bg-green">
@@ -133,11 +133,9 @@
                       </div>
                    </div>
                    {% endfor %}
-                </div>
-                {% endfor %}
-                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
