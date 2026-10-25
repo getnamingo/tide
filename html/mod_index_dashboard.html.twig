@@ -286,8 +286,8 @@
         <div class="row row-cards {{ rowClass }}">
             {% set domainProducts = guest.product_get_list({ "type": "domain" }) %}
             {% if domainProducts.list|length > 0 %}
-            <div class="card">
-                <div class="card-body" id="register">
+            <div class="card card-borderless bg-primary-lt">
+                <div class="card-body py-4" id="register">
                     {% set domains_enabled = guest.extension_is_on({"mod":"domains"}) %}
                     {% if domains_enabled %}
                         <div class="text-center mb-4">
