@@ -43,6 +43,14 @@
                     {% endif %}
                 </div>
             </div>
+            {% if guest.extension_is_on({"mod":"domains"}) %}
+            <div id="domain-price-strip" class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
+                {% for tld in pricing|keys|sort|filter(tld => pricing[tld].active == 1 and pricing[tld].allow_register == 1)|slice(0, 5) %}
+                    <span>{{ tld }} <strong>{{ (pricing[tld].price_registration * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</strong></span>
+                {% endfor %}
+                <a href="{{ 'domains'|url }}">{{ 'All extensions'|trans }} &rarr;</a>
+            </div>
+            {% endif %}
             <p class="text-muted text-center mt-3 mb-0" id="info-text">Search for your perfect domain name{% if transfer_tlds is not empty %} or transfer an existing one{% endif %}.</p>
             <input type="hidden" name="id" value="{{ product.id }}" />
             <input type="hidden" name="register_tld" value="" />
@@ -127,6 +135,7 @@
   </div>
 </div>
 
+{% if not guest.extension_is_on({"mod":"domains"}) %}
 <div id="tld-pricing-card" class="card card-borderless mt-3">
     <div class="card-body">
         <div class="row row-cards justify-content-center">
@@ -179,6 +188,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% if domainx_enabled %}
 <script src="{{ 'libs/punycode/punycode.js' | asset_url }}"></script>
@@ -219,6 +229,8 @@ function hide(el) {
 function hideTldPricingCard() {
   const card = document.getElementById('tld-pricing-card');
   if (card) card.style.display = 'none';
+  hide(document.getElementById('domain-price-strip'));
+  hide(document.getElementById('order-other-products'));
 }
 
 function setDomainResult(domain, available, statusText = null, mode = 'register') {

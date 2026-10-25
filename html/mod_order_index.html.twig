@@ -54,9 +54,10 @@
                     {{ include('mod_servicedomain_order_form.html.twig', {'product': product}) }}
                     <input type="hidden" name="multiple" value="1">
                 </form>
-                <hr class="my-4">
                 {% endif %}
 
+                <div id="order-other-products">
+                {% if product and product.type == 'domain' %}<hr class="my-4">{% endif %}
                 {% for i, category in guest.product_category_get_list.list|filter(c => c.products|filter(p => p.type != 'domain')|length > 0) %}
                 {% if not loop.first %}<hr />{% endif %}
                 {% if loop.length > 1 %}
@@ -134,6 +135,7 @@
                    {% endfor %}
                 </div>
                 {% endfor %}
+                </div>
             </div>
         </div>
     </div>
