@@ -42,7 +42,7 @@
         <div id="domain-search-transfer-form">
             <div class="row g-2 align-items-center {% if guest.extension_is_on({"mod":"domainsbot"}) %}mt-6{% endif %}">
                 <div class="col-12 col-md-8">
-                    <input type="text" class="form-control form-control-lg" placeholder="Enter your domain name" aria-label="Domain Name" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" required>
+                    <input type="text" class="form-control form-control-lg" placeholder="Enter your domain name" aria-label="Domain Name" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" inputmode="url" required>
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2 align-items-center flex-nowrap">
                     <button class="btn btn-primary btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="domain-check">{{ 'Search'|trans }}</button>
