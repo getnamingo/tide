@@ -23,6 +23,7 @@
             <h2 class="h2 text-center mb-4">{{ 'Login to your account'|trans }}</h2>
             {{ render_widgets('client.page.login.form.before') }}
             <form class="api-form auth" action="{{ 'client/login'|api_url(role='guest') }}" {{ fb_api_form({ redirect: redirect_uri|default('/')|url }) }}>
+              <input type="hidden" name="CSRFToken" value="{{ CSRFToken }}">
               <div class="mb-3">
                 <label class="form-label">{{ 'Email'|trans }}</label>
                 <input type="email" class="form-control" placeholder="{{ 'Enter your email address'|trans }}" name="email" value="{{ request.email }}" required="required" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>
