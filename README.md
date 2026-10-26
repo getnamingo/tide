@@ -15,7 +15,7 @@ Tide is a client area theme for FOSSBilling. It's designed to enhance your user 
 
 ## Compatibility
 
-- Tide 1.2.13 → FOSSBilling 0.8.8
+- Tide 1.2.14 → FOSSBilling 0.8.8
 
 We strongly recommend upgrading to the latest version of FOSSBilling.
 
@@ -23,7 +23,7 @@ We strongly recommend upgrading to the latest version of FOSSBilling.
 
 ```bash
 TMP=$(mktemp -d)
-git clone --branch v1.2.13 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
+git clone --branch v1.2.14 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
 mkdir -p /var/www/themes/tide
 cp -a "$TMP/tide/." /var/www/themes/tide/
 rm -rf /var/www/themes/tide/.git
@@ -39,7 +39,7 @@ rm -rf "$TMP"
 
 ```bash
 TMP=$(mktemp -d)
-git clone --branch v1.2.13 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
+git clone --branch v1.2.14 --depth 1 https://github.com/getnamingo/tide.git "$TMP/tide"
 cp -a /var/www/themes/tide/config/settings_data.json "$TMP/settings_data.json"
 cp -a "$TMP/tide/." /var/www/themes/tide/
 cp -a "$TMP/settings_data.json" /var/www/themes/tide/config/settings_data.json
