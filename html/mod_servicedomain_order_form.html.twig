@@ -26,9 +26,9 @@
 </style>
 
 <div class="card card-borderless">
-    <div class="card-body" id="register">
+    <div class="card-body py-1" id="register">
         <div class="text-center mb-4">
-            <h2 class="h1 mb-2">{{ 'Find your perfect domain name.'|trans }}</h2>
+            <h2 class="mb-2">{{ 'Find your perfect domain name.'|trans }}</h2>
             <p class="text-secondary mb-0">{{ 'Search, register, and manage your domains with ease.'|trans }}</p>
         </div>
     {% if guest.extension_is_on({"mod":"domainsbot"}) %}
@@ -45,9 +45,9 @@
                     <input type="text" class="form-control form-control-lg" placeholder="Enter your domain name" aria-label="Domain Name" name="domain_name" value="{{ request.domain_name }}" autocapitalize="none" inputmode="url" required>
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2 align-items-center flex-nowrap">
-                    <button class="btn btn-primary btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="domain-check">{{ 'Search'|trans }}</button>
+                    <button class="btn btn-primary btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="domain-check"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> {{ 'Search'|trans }}</button>
                     {% if transfer_tlds is not empty %}
-                        <button class="btn btn-success btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="transfer-check">{{ 'Transfer'|trans }}</button>
+                        <button class="btn btn-outline-teal btn-lg w-100 w-md-auto flex-fill flex-md-grow-0" type="button" id="transfer-check"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 18v3h16v-14l-8 -4l-8 4v3" /><path d="M4 14h9" /><path d="M10 11l3 3l-3 3" /></svg> {{ 'Transfer'|trans }}</button>
                     {% endif %}
                 </div>
             </div>

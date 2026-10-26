@@ -57,11 +57,7 @@
             </span>
         {% endif %}
     {% elseif request.checkout matches '/^\\d+$/' %}
-        {% if client %}
-            {{ 'Cart'|trans }}
-        {% else %}
-            {{ 'Login or Register'|trans }}
-        {% endif %}
+        {{ 'Cart'|trans }}
     {% endif %}
 {% endblock %}
 
@@ -665,7 +661,41 @@
    </div>
 </div>
 {% else %}
+    {% if cart.items %}
+    <div class="card card-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <div class="fw-semibold">{{ 'Your shopping cart'|trans }} <span class="text-secondary fw-normal">({{ cart.items|length }})</span></div>
+                <div class="fw-semibold">{{ (cart.total * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</div>
+            </div>
+            <div class="d-flex flex-column gap-1">
+                {% for item in cart.items|slice(0, 3) %}
+                <div class="small">
+                    {{ item.title }}
+                    {% if item.quantity > 1 %}<span class="text-secondary">× {{ item.quantity }}</span>{% endif %}
+                    {% if item.period|default(false) %}<span class="text-secondary">({{ item.period|period_title }})</span>{% endif %}
+                </div>
+                {% endfor %}
+                {% if cart.items|length > 3 %}
+                <div class="small text-secondary">+{{ cart.items|length - 3 }} {{ 'more items'|trans }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-info mb-3" role="status">
+        {{ 'Log in or create an account to complete your order.'|trans }}
+    </div>
     {% include 'mod_orderbutton_client.html.twig' %}
+    {% else %}
+    <div class="card">
+        {{ include('partial_empty_state.html.twig', {
+            'title': 'No items found'|trans,
+            'description': 'Your Shopping Cart is Empty.'|trans,
+            'action_url': 'order'|url,
+            'action_label': 'Browse products'|trans
+        }) }}
+    </div>
+    {% endif %}
 {% endif %}
 {% endif %}
 {% endblock %}

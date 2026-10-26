@@ -6,6 +6,14 @@
 {% block meta_title %}{{ 'Contact Us'|trans }}{% endblock %}
 {% block meta_description %}{{ 'Send a support request or question to our team using the contact form.'|trans }}{% endblock %}
 
+{% block page_header %}
+    {{ 'Contact Us'|trans }}
+{% endblock %}
+
+{% block page_description %}
+    {{ company.signature }}
+{% endblock %}
+
 {% block body_class %}support-contact-us{% endblock %}
 {% block breadcrumb %}
     <li class="breadcrumb-item active" aria-current="page">{{ 'Contact Us'|trans }}</li>
@@ -20,14 +28,6 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-4">
-                <div class="card-header py-3 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="mb-1">{{ 'Contact Us'|trans }}</h1>
-                            <span class="small text-muted">{{ company.signature }}</span>
-                        </div>
-                    </div>
-                </div>
                 <div class="card-body">
                     <form method="post" action="{{ 'support/ticket_create'|api_url(role: 'guest') }}" id="public-ticket-create" {{ fb_api_form({ callback: 'onTicketCreate' }) }}>
                         <div class="mb-3">

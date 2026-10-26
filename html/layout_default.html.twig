@@ -427,7 +427,8 @@
         {% set description %}{% block page_description %}{% endblock %}{% endset %}
         {% set actions %}{% block page_actions %}{% endblock %}{% endset %}
 
-        {% set show_breadcrumbs = settings.show_breadcrumb|default('') and current_active_menu != 'dashboard' %}
+        {% set breadcrumb_count = block('breadcrumbs')|split('<li')|length - 1 %}
+        {% set show_breadcrumbs = settings.show_breadcrumb|default('') and current_active_menu != 'dashboard' and breadcrumb_count > 2 %}
         {% set heading = heading|trim %}
         {% set description = description|trim %}
         {% set actions = actions|trim %}
