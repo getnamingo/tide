@@ -263,32 +263,17 @@
         {{ render_widgets('client.index.dashboard.client.after', { 'dashboard': dashboard, 'profile': profile }) }}
 
     {% else %}
-        {% set cardCount = 2 %}
-        {% if guest.extension_is_on({"mod":"news"}) %}{% set cardCount = cardCount + 1 %}{% endif %}
-        {% if guest.support_kb_enabled() %}{% set cardCount = cardCount + 1 %}{% endif %}
-
-        {% set rowClass = '' %}
-        {% set colClass = 'col-12 col-sm-6 col-md-4 col-lg-3' %}
-
-        {% if cardCount == 3 %}
-          {% set colClass = 'col-12 col-sm-6 col-md-4 col-lg-4' %}
-        {% elseif cardCount == 2 %}
-          {% set colClass = 'col-12 col-sm-6 col-md-4 col-lg-4' %}
-          {% set rowClass = 'justify-content-center' %}
-        {% elseif cardCount == 1 %}
-          {% set colClass = 'col-12 col-sm-8 col-md-6 col-lg-6' %}
-          {% set rowClass = 'justify-content-center' %}
-        {% endif %}
+        {% set domains_enabled = guest.extension_is_on({"mod":"domains"}) %}
+        {% set domainProducts = guest.product_get_list({ "type": "domain" }) %}
+        {% set registrar_mode = domains_enabled and domainProducts.list|length > 0 %}
 
         {% include 'custom/dashboard.top.twig' ignore missing %}
         {{ render_widgets('client.index.dashboard.guest.before') }}
 
-        <div class="row row-cards {{ rowClass }}">
-            {% set domainProducts = guest.product_get_list({ "type": "domain" }) %}
+        <div class="row row-cards">
             {% if domainProducts.list|length > 0 %}
             <div class="card card-borderless bg-primary-lt">
                 <div class="card-body py-4" id="register">
-                    {% set domains_enabled = guest.extension_is_on({"mod":"domains"}) %}
                     {% if domains_enabled %}
                         <div class="text-center mb-4">
                             <h2 class="h1 mb-2">{{ 'Find your perfect domain name.'|trans }}</h2>
@@ -350,110 +335,82 @@
 
             {% include 'custom/dashboard.widgets.twig' ignore missing %}
 
-            <div class="{{ colClass }} d-flex">
-                <div class="card bg-red text-red-fg d-print-none h-100 w-100">
-                    <div class="card-stamp">
-                        <div class="card-stamp-icon bg-white text-red">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
-                                <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path>
-                                <path d="M17 17h-11v-14h-2"></path>
-                                <path d="M6 5l14 1l-1 7h-13"></path>
+            <div class="col-12 col-md-4 d-flex">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="mb-3 text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M21 7l-18 0" />
+                                <path d="M18 10l3 -3l-3 -3" />
+                                <path d="M6 20l-3 -3l3 -3" />
+                                <path d="M3 17l18 0" />
                             </svg>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <h2>{{ 'Order'|trans }}</h2>
-                        <p>{{ 'Order new products and services'|trans }}</p>
-                        <div class="row">
-                            <div class="mt-2">
-                                <a href="{{ '/order'|url }}" class="btn btn-outline-light w-100">
-                                {{ 'Order'|trans }}
-                                </a>
-                            </div>
-                        </div>
+                        {% if registrar_mode %}
+                            <h3 class="card-title mb-2">{{ 'Domain transfers'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Already own a domain? Bring it together with your new registrations.'|trans }}</p>
+                        {% else %}
+                            <h3 class="card-title mb-2">{{ 'Explore services'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Find the products and services available from this provider.'|trans }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="{{ colClass }} d-flex">
-                <div class="card bg-azure text-azure-fg d-print-none h-100 w-100">
-                    <div class="card-stamp">
-                        <div class="card-stamp-icon bg-white text-azure">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
-                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+            <div class="col-12 col-md-4 d-flex">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="mb-3 text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                <path d="M4 12h8" />
+                                <path d="M12 15h8" />
+                                <path d="M12 9h8" />
+                                <path d="M12 4v16" />
                             </svg>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <h2>{{ 'Profile'|trans }}</h2>
-                        <p>{{ 'You are logged out'|trans }}</p>
-                        <div class="row g-2 mt-2">
-                          <div class="col-6">
-                            <a href="{{ '/login'|url }}" class="btn btn-outline-light w-100">
-                              {{ 'Login'|trans }}
-                            </a>
-                          </div>
-                          <div class="col-6">
-                            <a href="{{ '/signup'|url }}" class="btn btn-outline-light w-100">
-                              {{ 'Register'|trans }}
-                            </a>
-                          </div>
-                        </div>
+                        {% if registrar_mode %}
+                            <h3 class="card-title mb-2">{{ 'Domain management'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Keep your domains, nameservers, and contact details organized in one place.'|trans }}</p>
+                        {% else %}
+                            <h3 class="card-title mb-2">{{ 'One customer dashboard'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Manage your orders, services, and account details in one place.'|trans }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% if guest.extension_is_on({"mod":"news"}) %}
-            <div class="{{ colClass }} d-flex">
-                <div class="card bg-green text-green-fg d-print-none h-100 w-100">
-                    <div class="card-stamp">
-                        <div class="card-stamp-icon bg-white text-green">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                <path d="M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11"></path>
-                                <path d="M8 8l4 0"></path>
-                                <path d="M8 12l4 0"></path>
-                                <path d="M8 16l4 0"></path>
+            <div class="col-12 col-md-4 d-flex">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="mb-3 text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" />
                             </svg>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <h2>{{ 'News'|trans }}</h2>
-                        <p>{{ 'Latest news and announcements' | trans }}</p>
-                        <div class="row">
-                            <div class="mt-2">
-                                <a href="{{ '/news'|url }}" class="btn btn-outline-light w-100">
-                                {{ 'Announcements'|trans }}
-                                </a>
-                            </div>
-                        </div>
+                        {% if registrar_mode %}
+                            <h3 class="card-title mb-2">{{ 'Renewals and billing'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Follow your domain renewals and review invoices from your account.'|trans }}</p>
+                        {% else %}
+                            <h3 class="card-title mb-2">{{ 'Billing made simple'|trans }}</h3>
+                            <p class="text-secondary mb-0">{{ 'Review invoices, payments, and service information in your account.'|trans }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% endif %}
-            {% if guest.support_kb_enabled() %}
-            <div class="{{ colClass }} d-flex">
-                <div class="card bg-indigo text-azure-fg d-print-none h-100 w-100">
-                    <div class="card-stamp">
-                        <div class="card-stamp-icon bg-white text-azure">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6l0 13" /><path d="M12 6l0 13" /><path d="M21 6l0 13" /></svg>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <h2>{{ 'Knowledge Base'|trans }}</h2>
-                        <p>{{ 'Find answers to frequent questions' | trans }}</p>
-                        <div class="row">
-                            <div class="mt-2">
-                                <a href="{{ '/support/kb'|url }}" class="btn btn-outline-light w-100">
-                                {{ 'Knowledge Base'|trans }}
-                                </a>
-                            </div>
-                        </div>
+
+            {% if guest.extension_is_on({"mod":"news"}) or guest.support_kb_enabled() %}
+                <div class="col-12">
+                    <div class="d-flex flex-wrap justify-content-center gap-4 small pt-1">
+                        {% if guest.extension_is_on({"mod":"news"}) %}
+                            <a href="{{ '/news'|url }}">{{ 'Announcements'|trans }} &rarr;</a>
+                        {% endif %}
+                        {% if guest.support_kb_enabled() %}
+                            <a href="{{ '/support/kb'|url }}">{{ 'Knowledge Base'|trans }} &rarr;</a>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
             {% endif %}
         </div>
 
