@@ -1,0 +1,27 @@
+{% extends request.ajax ? "layout_blank.html.twig" : "layout_default.html.twig" %}
+
+{% block meta_title %}{{ page.title }}{% endblock %}
+{% block meta_description %}{{ page.description }}{% endblock %}
+{% block meta_keywords %}{{ page.keywords }}{% endblock %}
+
+{% block page_header %}
+    {{ page.title }}
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">{{ page.title }}</li>
+{% endblock %}
+
+{% block body_class %}custom-page{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    {{ (page.content ?? '')|markdown_to_html }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
