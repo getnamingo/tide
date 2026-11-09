@@ -6,6 +6,7 @@
 {% set domainx_enabled = guest.extension_is_on({"mod": "domainx"}) %}
 {% if domainx_enabled %}
 {% set domainx_tlds = guest.serviceDomain_tlds({"allow_register": 1}) %}
+{% set domainx_presentation = guest.domainx_presentation %}
 {% endif %}
 
 <style>
@@ -52,12 +53,21 @@
                 </div>
             </div>
             {% if guest.extension_is_on({"mod":"domains"}) %}
+            {% set strip_tlds = pricing|keys|sort|filter(tld => pricing[tld].active == 1 and pricing[tld].allow_register == 1) %}
+            {% set strip_count = 5 %}
+            {% if domainx_enabled %}
+                {% set strip_count = domainx_presentation.order_strip_count ?? 5 %}
+                {% if domainx_presentation.order_strip_order|default('alphabetical') == 'search' %}
+                    {% set positions = domainx_presentation.positions|default({}) %}
+                    {% set strip_tlds = strip_tlds|sort((a, b) => ((positions[a] ?? 2147483647) <=> (positions[b] ?? 2147483647)) ?: (a <=> b)) %}
+                {% endif %}
+            {% endif %}
             <div id="domain-price-strip" class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
-                {% for tld in pricing|keys|sort|filter(tld => pricing[tld].active == 1 and pricing[tld].allow_register == 1)|slice(0, 5) %}
+                {% for tld in strip_tlds|slice(0, strip_count) %}
                     {% if not loop.first %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
                     <span>{{ tld }} <strong>{{ (pricing[tld].price_registration * cart_currency.conversion_rate)|format_currency(cart_currency.code) }}</strong></span>
                 {% endfor %}
-                <span class="text-secondary" aria-hidden="true">&middot;</span>
+                {% if strip_tlds|slice(0, strip_count)|length > 0 %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
                 <a href="{{ 'domains'|url }}">{{ 'All extensions'|trans }} &rarr;</a>
             </div>
             {% endif %}
@@ -493,6 +503,14 @@ document.addEventListener("DOMContentLoaded", () => {
         name.textContent = displayDomain;
         name.classList.remove('text-truncate');
         name.classList.add('text-break');
+
+        if (result.highlight === 'hot' || result.highlight === 'top') {
+            const badge = document.createElement('span');
+            badge.className = 'badge ms-2 align-middle ' + (result.highlight === 'hot' ? 'bg-orange-lt text-orange' : 'bg-blue-lt text-blue');
+            badge.textContent = result.highlight === 'hot'
+                ? "{{ 'Hot'|trans|e('js') }}" : "{{ 'Top'|trans|e('js') }}";
+            name.appendChild(badge);
+        }
 
         const available = result.available === true;
         const unavailable = result.available === false;
