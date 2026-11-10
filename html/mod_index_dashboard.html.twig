@@ -294,7 +294,17 @@
                         {% set pricing = domainProduct.pricing ?? {} %}
 
                         {% if domains_enabled %}
-                            {% set featured = pricing|filter(item => (item.active ?? 0) == 1 and (item.allow_register ?? 0) == 1)|sort((a, b) => a.tld <=> b.tld)|slice(0, 5) %}
+                            {% set featured = pricing|filter(item => (item.active ?? 0) == 1 and (item.allow_register ?? 0) == 1)|sort((a, b) => a.tld <=> b.tld) %}
+                            {% set strip_count = 5 %}
+                            {% if guest.extension_is_on({'mod': 'domainx'}) %}
+                                {% set presentation = guest.domainx_presentation %}
+                                {% set strip_count = presentation.homepage_strip_count ?? 5 %}
+                                {% if presentation.homepage_strip_order|default('alphabetical') == 'search' %}
+                                    {% set positions = presentation.positions|default({}) %}
+                                    {% set featured = featured|sort((a, b) => ((positions[a.tld] ?? 2147483647) <=> (positions[b.tld] ?? 2147483647)) ?: (a.tld <=> b.tld)) %}
+                                {% endif %}
+                            {% endif %}
+                            {% set featured = featured|slice(0, strip_count) %}
                             <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-3 small">
                                 {% for item in featured %}
                                     {% if not loop.first %}<span class="text-secondary" aria-hidden="true">&middot;</span>{% endif %}
