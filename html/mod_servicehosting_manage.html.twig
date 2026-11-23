@@ -11,11 +11,29 @@
             </div>
             <div class="card-body">
               <dl class="row">
+                <dt class="col-5">{{ 'Domain'|trans }}:</dt>
+                <dd class="col-7"><a href="https://{{ service.domain }}" target="_blank" rel="noopener noreferrer">{{ service.domain }}</a></dd>
+
                 <dt class="col-5">{{ 'Server IP'|trans }}:</dt>
                 <dd class="col-7">{{ server.ip }}</dd>
 
                 <dt class="col-5">{{ 'Server Hostname'|trans }}:</dt>
                 <dd class="col-7">{{ server.hostname }}</dd>
+
+                {% set nameservers = [
+                  server.ns1|default(''),
+                  server.ns2|default(''),
+                  server.ns3|default(''),
+                  server.ns4|default('')
+                ]|filter(ns => ns) %}
+                {% if nameservers %}
+                <dt class="col-5">{{ 'Nameservers'|trans }}:</dt>
+                <dd class="col-7">
+                  {% for ns in nameservers %}
+                  <div><code>{{ ns }}</code></div>
+                  {% endfor %}
+                </dd>
+                {% endif %}
 
                 <dt class="col-5">{{ 'Username'|trans }}:</dt>
                 <dd class="col-7">{{ service.username }}</dd>
@@ -73,7 +91,7 @@
                   </div>
                   <div>
                     <label class="form-label visually-hidden" for="password-confirm">{{ 'Password Confirm'|trans }}</label>
-                    <input type="password" placeholder="{{ 'Password Confirm'|trans }}" class="form-control" id="password-confirm" name="password" value="{{ request.password }}" required="required" autocomplete="new-password" />
+                    <input type="password" placeholder="{{ 'Password Confirm'|trans }}" class="form-control" id="password-confirm" name="password_confirm" value="{{ request.password_confirm }}" required="required" autocomplete="new-password" />
                   </div>
                   <input type="hidden" name="order_id" value="{{ order.id }}">
                   <div class="mt-1 d-flex justify-content-end"><button type="submit" class="btn btn-outline-primary" value="{{ 'Change Password'|trans }}">{{ 'Change Password'|trans }}</button></div>
