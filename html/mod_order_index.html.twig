@@ -20,7 +20,8 @@
 
 {% block content %}
 <div class="row row-deck row-cards">
-    {% set product = guest.product_get({'id': 1}) %}
+    {% set domain_products = guest.product_get_list({'type': 'domain'}) %}
+    {% set product = domain_products.list|first %}
     {% if product and product.type == 'domain' %}
     <div class="col-12">
         <div class="card card-md">
